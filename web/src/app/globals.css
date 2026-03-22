@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    @apply antialiased text-slate-800 bg-white;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .container-xl {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-lg
+           bg-brand-600 text-white font-medium text-sm
+           hover:bg-brand-700 active:bg-brand-800
+           transition-colors duration-150 focus:outline-none
+           focus:ring-2 focus:ring-brand-500 focus:ring-offset-2;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-lg
+           border border-slate-200 bg-white text-slate-700 font-medium text-sm
+           hover:bg-slate-50 active:bg-slate-100
+           transition-colors duration-150 focus:outline-none
+           focus:ring-2 focus:ring-brand-500 focus:ring-offset-2;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg
+           text-slate-600 font-medium text-sm
+           hover:bg-slate-100 hover:text-slate-900
+           transition-colors duration-150;
+  }
+  .card {
+    @apply bg-white rounded-2xl border border-slate-100 shadow-sm
+           hover:shadow-md transition-shadow duration-200;
+  }
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full
+           text-xs font-medium;
+  }
+  .input-field {
+    @apply w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm
+           text-slate-800 placeholder-slate-400
+           focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+           transition duration-150;
+  }
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-widest text-brand-600 mb-3;
+  }
+  .section-title {
+    @apply text-3xl sm:text-4xl font-bold text-slate-900 leading-tight;
+  }
+  .section-subtitle {
+    @apply text-lg text-slate-500 mt-3 leading-relaxed;
+  }
+}
+
+/* Prose overrides */
+.prose h2 { @apply text-2xl font-bold text-slate-900 mt-8 mb-4; }
+.prose h3 { @apply text-xl font-semibold text-slate-800 mt-6 mb-3; }
+.prose p  { @apply text-slate-600 leading-relaxed mb-4; }
+.prose a  { @apply text-brand-600 hover:text-brand-700 underline; }
+.prose blockquote {
+  @apply border-l-4 border-brand-500 pl-6 italic text-slate-500 my-6;
+}
