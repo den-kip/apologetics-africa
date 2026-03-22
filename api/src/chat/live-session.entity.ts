@@ -1,0 +1,44 @@
+import {
+  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
+  UpdateDateColumn, OneToMany,
+} from 'typeorm';
+import { ChatMessage } from './chat-message.entity';
+
+export enum SessionStatus {
+  SCHEDULED = 'scheduled',
+  LIVE = 'live',
+  ENDED = 'ended',
+}
+
+@Entity('live_sessions')
+export class LiveSession {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column()
+  title: string;
+
+  @Column({ type: 'text', nullable: true })
+  description: string;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  scheduledAt: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  startedAt: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  endedAt: Date;
+
+  @Column({ type: 'enum', enum: SessionStatus, default: SessionStatus.SCHEDULED })
+  status: SessionStatus;
+
+  @OneToMany(() => ChatMessage, (m) => m.session)
+  messages: ChatMessage[];
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+}

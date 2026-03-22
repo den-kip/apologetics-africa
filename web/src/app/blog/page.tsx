@@ -13,11 +13,8 @@ export default function BlogPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [tag, setTag] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
 
-  useEffect(() => {
-    api.blog.tags().then(setTags).catch(() => {});
-  }, []);
+  const TAGS = ['Africa', 'Truth', 'Church', 'Postmodernism', 'Suffering'];
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -61,35 +58,33 @@ export default function BlogPage() {
           <div className="flex-1 max-w-sm">
             <SearchBar value={search} onChange={setSearch} placeholder="Search articles…" />
           </div>
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setTag('')}
+              className={clsx(
+                'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
+                !tag
+                  ? 'bg-brand-600 text-white border-brand-600'
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-brand-300',
+              )}
+            >
+              All
+            </button>
+            {TAGS.map((t) => (
               <button
-                onClick={() => setTag('')}
+                key={t}
+                onClick={() => setTag(t === tag ? '' : t)}
                 className={clsx(
                   'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
-                  !tag
+                  tag === t
                     ? 'bg-brand-600 text-white border-brand-600'
                     : 'bg-white text-slate-600 border-slate-200 hover:border-brand-300',
                 )}
               >
-                All
+                {t}
               </button>
-              {tags.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTag(t)}
-                  className={clsx(
-                    'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
-                    tag === t
-                      ? 'bg-brand-600 text-white border-brand-600'
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-brand-300',
-                  )}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          )}
+            ))}
+          </div>
         </div>
 
         {/* Grid */}

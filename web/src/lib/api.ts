@@ -102,6 +102,30 @@ export const api = {
     get: (slug: string) => request<BlogPost>(`/blog/${slug}`),
     tags: () => request<string[]>('/blog/tags'),
   },
+  sessions: {
+    list: (status?: string) => {
+      const q = status ? `?status=${status}` : '';
+      return request<LiveSession[]>(`/sessions${q}`);
+    },
+    getLive: () => request<LiveSession | null>('/sessions/live'),
+    get: (id: string) => request<LiveSession>(`/sessions/${id}`),
+    getMessages: (id: string, token: string) =>
+      request<ChatMessageData[]>(`/sessions/${id}/messages`, { token }),
+    create: (data: { title: string; description?: string; scheduledAt?: string }, token: string) =>
+      request<LiveSession>('/sessions', { method: 'POST', body: JSON.stringify(data), token }),
+    update: (id: string, data: { title?: string; description?: string; scheduledAt?: string }, token: string) =>
+      request<LiveSession>(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(data), token }),
+    start: (id: string, token: string) =>
+      request<LiveSession>(`/sessions/${id}/start`, { method: 'PATCH', token }),
+    end: (id: string, token: string) =>
+      request<LiveSession>(`/sessions/${id}/end`, { method: 'PATCH', token }),
+    remove: (id: string, token: string) =>
+      request<void>(`/sessions/${id}`, { method: 'DELETE', token }),
+    listAll: (token: string, status?: string) => {
+      const q = status ? `?status=${status}` : '';
+      return request<LiveSession[]>(`/sessions/admin/all${q}`, { token });
+    },
+  },
   admin: {
     stats: (token: string) =>
       Promise.all([
@@ -301,6 +325,31 @@ export interface SocialPost {
   status: 'success' | 'failed';
   error?: string;
   postedAt: string;
+}
+
+export interface LiveSession {
+  id: string;
+  title: string;
+  description?: string;
+  scheduledAt?: string;
+  startedAt?: string;
+  endedAt?: string;
+  status: 'scheduled' | 'live' | 'ended';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessageData {
+  id: string;
+  sessionId: string;
+  authorName: string;
+  userId: string;
+  body: string;
+  pinned: boolean;
+  replyToId?: string;
+  replyTo?: { id: string; authorName: string; body: string } | null;
+  reactions: Record<string, { count: number; userIds: string[] }>;
+  createdAt: string;
 }
 
 export interface SubmitQuestionPayload {

@@ -25,6 +25,8 @@ export default function AdminBlogPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [status, setStatus] = useState('');   // '' | 'true' | 'false'
+  const [month, setMonth] = useState('');     // 'YYYY-MM' or ''
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -33,17 +35,29 @@ export default function AdminBlogPage() {
     setLoading(true);
     const params: Record<string, string | number> = { page, limit: 15 };
     if (search) params.search = search;
+    if (status) params.published = status;
+    if (month) params.month = month;
     api.admin.blog.list(params, token)
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [token, page, search]);
+  }, [token, page, search, status, month]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     setSearch(searchInput);
+    setPage(1);
+  }
+
+  function handleStatusChange(val: string) {
+    setStatus(val);
+    setPage(1);
+  }
+
+  function handleMonthChange(val: string) {
+    setMonth(val);
     setPage(1);
   }
 
@@ -88,20 +102,49 @@ export default function AdminBlogPage() {
         </Link>
       </div>
 
-      {/* Search */}
-      <form onSubmit={handleSearch} className="flex gap-2 mb-5 max-w-sm">
-        <div className="relative flex-1">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search posts…"
-            className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
-        </div>
-        <button type="submit" className="btn-primary text-sm px-4 py-2">Search</button>
-      </form>
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2 mb-5">
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search posts…"
+              className="pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 w-52"
+            />
+          </div>
+          <button type="submit" className="btn-primary text-sm px-4 py-2">Search</button>
+        </form>
+
+        <select
+          value={status}
+          onChange={(e) => handleStatusChange(e.target.value)}
+          className="py-2 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white text-slate-700"
+        >
+          <option value="">All statuses</option>
+          <option value="true">Published</option>
+          <option value="false">Draft</option>
+        </select>
+
+        <input
+          type="month"
+          value={month}
+          onChange={(e) => handleMonthChange(e.target.value)}
+          className="py-2 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white text-slate-700"
+        />
+
+        {(search || status || month) && (
+          <button
+            type="button"
+            onClick={() => { setSearch(''); setSearchInput(''); setStatus(''); setMonth(''); setPage(1); }}
+            className="py-2 px-3 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+          >
+            Clear
+          </button>
+        )}
+      </div>
 
       {/* Table */}
       <div className="card overflow-hidden">

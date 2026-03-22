@@ -49,8 +49,11 @@ export class BlogController {
     @Query('page') page = 1,
     @Query('limit') limit = 20,
     @Query('search') search?: string,
+    @Query('published') published?: string,
+    @Query('month') month?: string,
   ) {
-    return this.blogService.findAll({ page: +page, limit: +limit, search, published: undefined });
+    const publishedFilter = published === 'true' ? true : published === 'false' ? false : undefined;
+    return this.blogService.findAll({ page: +page, limit: +limit, search, published: publishedFilter, month });
   }
 
   @Get('admin/:id')

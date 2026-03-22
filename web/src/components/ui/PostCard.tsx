@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ClockIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { ClockIcon, EyeIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 import type { BlogPost } from '@/lib/api';
 
 // Themed fallback images by tag keywords
@@ -56,13 +56,15 @@ export function PostCard({ post, index = 0 }: Props) {
 
         <div className="mt-4 flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-50">
           <div className="flex items-center gap-3">
+            {(post.publishedAt || post.createdAt) && (
+              <span className="flex items-center gap-1">
+                <CalendarDaysIcon className="w-3.5 h-3.5" />
+                {new Date(post.publishedAt || post.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+            )}
             <span className="flex items-center gap-1">
               <ClockIcon className="w-3.5 h-3.5" />
               {post.readingTimeMinutes} min
-            </span>
-            <span className="flex items-center gap-1">
-              <EyeIcon className="w-3.5 h-3.5" />
-              {post.viewCount.toLocaleString()}
             </span>
           </div>
           <span className="font-semibold text-brand-600 group-hover:text-brand-700">Read →</span>

@@ -5,19 +5,28 @@ import { useState, useRef, useEffect } from 'react';
 import { Bars3Icon, XMarkIcon, UserCircleIcon, ArrowRightOnRectangleIcon, ChevronDownIcon, Cog6ToothIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 import { useAuth } from '@/lib/auth';
+import { api } from '@/lib/api';
 
 const nav = [
   { label: 'Home',      href: '/' },
   { label: 'Resources', href: '/resources' },
   { label: 'Questions', href: '/questions' },
   { label: 'Blog',      href: '/blog' },
+  { label: 'Live',      href: '/live', live: true },
 ];
 
 export function Header() {
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [liveSession, setLiveSession] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { user, logout, loading } = useAuth();
+
+  useEffect(() => {
+    api.sessions.getLive()
+      .then((s) => setLiveSession(!!s))
+      .catch(() => {});
+  }, []);
 
   // Close user menu on outside click
   useEffect(() => {
@@ -47,8 +56,11 @@ export function Header() {
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-1">
             {nav.map((item) => (
-              <Link key={item.href} href={item.href} className="btn-ghost text-sm">
+              <Link key={item.href} href={item.href} className="btn-ghost text-sm relative">
                 {item.label}
+                {(item as any).live && liveSession && (
+                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                )}
               </Link>
             ))}
           </nav>
@@ -135,10 +147,13 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="block px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
                 onClick={() => setOpen(false)}
               >
                 {item.label}
+                {(item as any).live && liveSession && (
+                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                )}
               </Link>
             ))}
             <div className="pt-2 flex flex-col gap-1 border-t border-slate-100">

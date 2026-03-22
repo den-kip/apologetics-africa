@@ -17,6 +17,7 @@ import { UploadModule } from './upload/upload.module';
 import { TopicsModule } from './topics/topics.module';
 import { SocialModule } from './social/social.module';
 import { ContactModule } from './contact/contact.module';
+import { ChatModule } from './chat/chat.module';
 import databaseConfig from './config/database.config';
 import appConfig from './config/app.config';
 
@@ -83,6 +84,7 @@ import appConfig from './config/app.config';
     TopicsModule,
     SocialModule,
     ContactModule,
+    ChatModule,
   ],
 })
 export class AppModule {}

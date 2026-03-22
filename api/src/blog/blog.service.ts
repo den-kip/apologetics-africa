@@ -41,8 +41,9 @@ export class BlogService {
     tag?: string;
     featured?: boolean;
     published?: boolean;
+    month?: string; // "YYYY-MM"
   }) {
-    const { page = 1, limit = 9, search, tag, featured } = opts;
+    const { page = 1, limit = 9, search, tag, featured, month } = opts;
     const published = 'published' in opts ? opts.published : true;
     const qb = this.repo
       .createQueryBuilder('post')
@@ -50,6 +51,7 @@ export class BlogService {
       .where('1=1')
       .orderBy('post.featured', 'DESC')
       .addOrderBy('post.publishedAt', 'DESC')
+      .addOrderBy('post.createdAt', 'DESC')
       .take(limit)
       .skip((page - 1) * limit);
 
@@ -57,6 +59,12 @@ export class BlogService {
     if (search) qb.andWhere('post.title ILIKE :search', { search: `%${search}%` });
     if (featured !== undefined) qb.andWhere('post.featured = :featured', { featured });
     if (tag) qb.andWhere(':tag = ANY(post.tags)', { tag });
+    if (month) {
+      const [y, m] = month.split('-').map(Number);
+      const from = new Date(Date.UTC(y, m - 1, 1));
+      const to = new Date(Date.UTC(y, m, 1));
+      qb.andWhere('post.createdAt >= :from AND post.createdAt < :to', { from, to });
+    }
 
     const [data, total] = await qb.getManyAndCount();
     return { data, total, page, limit, pages: Math.ceil(total / limit) };
