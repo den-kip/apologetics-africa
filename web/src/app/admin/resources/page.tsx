@@ -12,7 +12,7 @@ import { ImageUpload } from '@/components/ui/ImageUpload';
 import { FileUpload } from '@/components/ui/FileUpload';
 
 const RESOURCE_TYPES = [
-  'article', 'video', 'podcast', 'book', 'course', 'tool', 'sermon', 'session',
+  'video', 'podcast', 'sermon', 'session', 'course', 'book', 'tool',
 ] as const;
 
 const RESOURCE_CATEGORIES = [
@@ -32,7 +32,7 @@ const RESOURCE_CATEGORIES = [
 const BLANK: Partial<Resource> & { title: string; description: string } = {
   title: '',
   description: '',
-  type: 'article',
+  type: 'video',
   category: 'general',
   externalUrl: '',
   thumbnailUrl: '',
@@ -123,7 +123,7 @@ export default function AdminResourcesPage() {
       published: r.published,
     });
     setTagsInput((r.tags ?? []).join(', '));
-    setSourceMode(r.externalUrl ? 'link' : 'link');
+    setSourceMode('link');
     setSaveError('');
     setPanelOpen(true);
   }

@@ -271,7 +271,7 @@ export function EventsCalendar({ variant = 'section' }: Props) {
 
   // Full section variant
   return (
-    <section className="py-20 bg-brand-950 text-white">
+    <section id="saturday-sessions" className="py-20 bg-brand-950 text-white">
       <div className="container-xl">
         <div className="grid lg:grid-cols-2 gap-16 items-start">
           {/* Left: copy + upcoming dates */}
@@ -395,36 +395,52 @@ export function EventsCalendar({ variant = 'section' }: Props) {
               />
               {/* Download / Share actions */}
               <div className="flex items-center gap-2 px-4 py-3 bg-white/5 border-t border-white/10">
-                <a
-                  href={posterSrc}
-                  download
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(posterSrc);
+                      const blob = await res.blob();
+                      const objectUrl = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = objectUrl;
+                      a.download = `session-poster-${Date.now()}.${blob.type.split('/')[1] || 'jpg'}`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(objectUrl);
+                    } catch {
+                      window.open(posterSrc, '_blank');
+                    }
+                  }}
                   className="flex items-center gap-1.5 text-xs font-medium text-blue-200 hover:text-white transition-colors"
                 >
                   <ArrowDownTrayIcon className="w-4 h-4" />
-                  Download
-                </a>
+                  Download Poster
+                </button>
                 <span className="text-white/20">·</span>
                 <button
                   type="button"
                   onClick={async () => {
                     const title = nextSession?.title || settings.topic;
+                    const sessionUrl = `${window.location.origin}/#saturday-sessions`;
                     if (navigator.share) {
                       try {
                         await navigator.share({
                           title: `Session: ${title}`,
                           text: `Join us for "${title}" — an Apologetics Africa Saturday session.`,
-                          url: window.location.href,
+                          url: sessionUrl,
                         });
                       } catch {}
                     } else {
-                      await navigator.clipboard.writeText(window.location.href);
+                      await navigator.clipboard.writeText(sessionUrl);
                       alert('Link copied to clipboard!');
                     }
                   }}
                   className="flex items-center gap-1.5 text-xs font-medium text-blue-200 hover:text-white transition-colors"
                 >
                   <ShareIcon className="w-4 h-4" />
-                  Share
+                  Share Poster
                 </button>
               </div>
             </div>

@@ -17,7 +17,7 @@ export function FeaturedResources({ resources }: Props) {
             <p className="section-label">Library</p>
             <h2 className="section-title">Featured Resources</h2>
             <p className="section-subtitle max-w-xl">
-              Curated articles, videos, and books to deepen your understanding and
+              Curated sermons, sessions, and videos to deepen your understanding and
               strengthen your defence of the faith.
             </p>
           </div>

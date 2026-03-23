@@ -5,14 +5,15 @@ import {
 import { User } from '../users/user.entity';
 
 export enum ResourceType {
-  ARTICLE  = 'article',
   VIDEO    = 'video',
   PODCAST  = 'podcast',
-  BOOK     = 'book',
-  COURSE   = 'course',
-  TOOL     = 'tool',
   SERMON   = 'sermon',
   SESSION  = 'session',
+  COURSE   = 'course',
+  BOOK     = 'book',
+  TOOL     = 'tool',
+  // kept for backward-compat with existing data — do not use for new resources
+  ARTICLE  = 'article',
 }
 
 export enum ResourceCategory {
@@ -52,7 +53,7 @@ export class Resource {
   @Column({ nullable: true })
   thumbnailUrl: string;
 
-  @Column({ type: 'enum', enum: ResourceType, default: ResourceType.ARTICLE })
+  @Column({ type: 'enum', enum: ResourceType, default: ResourceType.VIDEO })
   type: ResourceType;
 
   @Column({ type: 'enum', enum: ResourceCategory, default: ResourceCategory.GENERAL })

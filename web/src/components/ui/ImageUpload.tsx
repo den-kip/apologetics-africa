@@ -37,8 +37,8 @@ export function ImageUpload({ value, onChange, label, hint }: Props) {
         throw new Error(err.message || 'Upload failed');
       }
       const data = await res.json();
-      // data.url is like /uploads/filename — prepend API base
-      onChange(`${API_BASE}${data.url}`);
+      // Store just the relative path so it works across environments
+      onChange(data.url);
     } catch (e: any) {
       setError(e.message || 'Upload failed');
     } finally {
@@ -57,7 +57,12 @@ export function ImageUpload({ value, onChange, label, hint }: Props) {
     handleFiles(e.dataTransfer.files);
   }
 
-  const previewUrl = value || null;
+  // Resolve relative API paths to full URLs so the browser can fetch them directly
+  const previewUrl = value
+    ? value.startsWith('/uploads/')
+      ? `${API_BASE}${value}`
+      : value
+    : null;
 
   return (
     <div>

@@ -37,7 +37,7 @@ export async function TopicsGrid() {
           <p className="section-label">Topics</p>
           <h2 className="section-title">Browse by Subject</h2>
           <p className="section-subtitle mx-auto max-w-lg">
-            Find sermons, sessions, and articles on the questions that matter most.
+            Find sermons, sessions, and videos on the questions that matter most.
           </p>
         </div>
 

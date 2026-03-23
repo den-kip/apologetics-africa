@@ -15,11 +15,11 @@ const MEDIA_TYPES = [
   { value: '',         label: 'All Media'   },
   { value: 'sermon',  label: 'Sermons'     },
   { value: 'session', label: 'Sessions'    },
-  { value: 'article', label: 'Articles'    },
   { value: 'video',   label: 'Videos'      },
   { value: 'podcast', label: 'Podcasts'    },
-  { value: 'book',    label: 'Books'       },
   { value: 'course',  label: 'Courses'     },
+  { value: 'book',    label: 'Books'       },
+  { value: 'tool',    label: 'Tools'       },
 ];
 
 const CATEGORIES = [
@@ -123,7 +123,7 @@ export default function ResourcesPage() {
           <p className="section-label">Library</p>
           <h1 className="section-title">Apologetics Resources</h1>
           <p className="section-subtitle max-w-2xl">
-            Sermons, apologetics sessions, articles, podcasts, and books — curated to
+            Sermons, sessions, videos, and podcasts — curated multimedia to
             equip you in defending and sharing the Christian faith across Africa.
           </p>
         </div>
@@ -138,7 +138,7 @@ export default function ResourcesPage() {
             {/* Search + filter toggle */}
             <div className="flex gap-3 mb-4">
               <div className="flex-1">
-                <SearchBar value={search} onChange={setSearch} placeholder="Search sermons, sessions, articles…" />
+                <SearchBar value={search} onChange={setSearch} placeholder="Search sermons, sessions, videos…" />
               </div>
               <button
                 onClick={() => setShowFilters(!showFilters)}
