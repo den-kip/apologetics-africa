@@ -23,6 +23,14 @@ class CreateSessionDto {
   @IsOptional()
   @IsDateString()
   scheduledAt?: string;
+
+  @IsOptional()
+  @IsString()
+  posterUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  link?: string;
 }
 
 @ApiTags('sessions')
@@ -43,6 +51,12 @@ export class SessionsController {
   @ApiOperation({ summary: 'Get current live session (public)' })
   getLive() {
     return this.chatService.getLiveSession();
+  }
+
+  @Get('next')
+  @ApiOperation({ summary: 'Get next upcoming scheduled session (public)' })
+  getNext() {
+    return this.chatService.getNextSession();
   }
 
   @Get('admin/all')
@@ -80,6 +94,8 @@ export class SessionsController {
       dto.title,
       dto.description,
       dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
+      dto.posterUrl,
+      dto.link,
     );
   }
 
@@ -112,6 +128,24 @@ export class SessionsController {
     const session = await this.chatService.endSession(id);
     this.chatGateway.broadcastSessionUpdate(id, 'ended');
     return session;
+  }
+
+  @Patch(':id/cancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cancel a session (admin)' })
+  cancel(@Param('id', ParseUUIDPipe) id: string) {
+    return this.chatService.cancelSession(id);
+  }
+
+  @Post('generate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate upcoming sessions for the next 2 months (admin)' })
+  generate() {
+    return this.chatService.generateUpcomingSessions(2);
   }
 
   @Delete(':id')

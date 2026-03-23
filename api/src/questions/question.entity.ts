@@ -78,6 +78,9 @@ export class Question {
   @Column({ nullable: true })
   topicId: string;
 
+  @Column({ type: 'date', nullable: true })
+  sessionDate: string;
+
   @ManyToOne(() => User, { nullable: true, eager: false })
   @JoinColumn({ name: 'answeredById' })
   answeredBy: User;

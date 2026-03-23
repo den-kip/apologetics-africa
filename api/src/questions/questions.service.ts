@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
 import { InjectQueue } from '@nestjs/bull';
@@ -23,6 +23,10 @@ export class QuestionsService {
   ) {}
 
   async submit(dto: CreateQuestionDto): Promise<Question> {
+    if (dto.category === QuestionCategory.SESSION && !dto.sessionDate) {
+      throw new BadRequestException('A session date is required for session-category questions');
+    }
+
     const question = this.repo.create(dto);
     const saved = await this.repo.save(question);
 

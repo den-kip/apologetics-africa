@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ClockIcon, EyeIcon, CalendarDaysIcon } from '@heroicons/react/24/outline';
 import type { BlogPost } from '@/lib/api';
+import { BookmarkButton } from './BookmarkButton';
 
 // Themed fallback images by tag keywords
 const FALLBACKS = [
@@ -67,7 +68,10 @@ export function PostCard({ post, index = 0 }: Props) {
               {post.readingTimeMinutes} min
             </span>
           </div>
-          <span className="font-semibold text-brand-600 group-hover:text-brand-700">Read →</span>
+          <div className="flex items-center gap-1">
+            <BookmarkButton type="blog" targetId={post.id} />
+            <span className="font-semibold text-brand-600 group-hover:text-brand-700">Read →</span>
+          </div>
         </div>
       </div>
     </Link>

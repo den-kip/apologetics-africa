@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth';
 import {
   PlusIcon, PlayIcon, StopIcon, TrashIcon, PencilIcon,
   ArchiveBoxIcon, CalendarDaysIcon, ChatBubbleLeftRightIcon,
-  SignalIcon, EyeIcon,
+  SignalIcon, EyeIcon, XCircleIcon, ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 
@@ -25,6 +25,14 @@ function StatusBadge({ status }: { status: LiveSession['status'] }) {
       <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
         <CalendarDaysIcon className="w-3 h-3" />
         Scheduled
+      </span>
+    );
+  }
+  if (status === 'cancelled') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-600">
+        <XCircleIcon className="w-3 h-3" />
+        Cancelled
       </span>
     );
   }
@@ -53,6 +61,7 @@ export default function AdminSessionsPage() {
   const [form, setForm] = useState<SessionFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   const load = () => {
     if (!token) return;
@@ -126,6 +135,17 @@ export default function AdminSessionsPage() {
     }
   };
 
+  const handleCancel = async (s: LiveSession) => {
+    if (!token || !confirm(`Cancel "${s.title}"? It will remain visible in admin but hidden from the public.`)) return;
+    setActionId(s.id);
+    try {
+      await api.sessions.cancel(s.id, token);
+      load();
+    } finally {
+      setActionId(null);
+    }
+  };
+
   const handleDelete = async (s: LiveSession) => {
     if (!token || !confirm(`Delete "${s.title}"? This cannot be undone.`)) return;
     setActionId(s.id);
@@ -134,6 +154,22 @@ export default function AdminSessionsPage() {
       load();
     } finally {
       setActionId(null);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!token) return;
+    setGenerating(true);
+    try {
+      const result = await api.sessions.generate(token);
+      alert(result.created > 0
+        ? `Generated ${result.created} new session${result.created !== 1 ? 's' : ''}.`
+        : 'All upcoming sessions are already scheduled.');
+      load();
+    } catch (err: any) {
+      alert(err.message || 'Failed to generate sessions');
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -147,10 +183,21 @@ export default function AdminSessionsPage() {
             Create and manage live chat sessions for Saturday apologetics.
           </p>
         </div>
-        <button onClick={openCreate} className="btn-primary flex items-center gap-2">
-          <PlusIcon className="w-4 h-4" />
-          New Session
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleGenerate}
+            disabled={generating}
+            className="btn-ghost flex items-center gap-2 text-sm disabled:opacity-50"
+            title="Auto-generate sessions for the 2nd & 4th Saturday of the next 2 months"
+          >
+            <ArrowPathIcon className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} />
+            Generate Schedule
+          </button>
+          <button onClick={openCreate} className="btn-primary flex items-center gap-2">
+            <PlusIcon className="w-4 h-4" />
+            New Session
+          </button>
+        </div>
       </div>
 
       {/* Table */}
@@ -241,11 +288,21 @@ export default function AdminSessionsPage() {
                           <StopIcon className="w-4 h-4" />
                         </button>
                       )}
+                      {s.status === 'scheduled' && (
+                        <button
+                          onClick={() => handleCancel(s)}
+                          disabled={actionId === s.id}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-40"
+                          title="Cancel session"
+                        >
+                          <XCircleIcon className="w-4 h-4" />
+                        </button>
+                      )}
                       {s.status !== 'live' && (
                         <button
                           onClick={() => openEdit(s)}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-colors"
-                          title="Edit"
+                          title="Edit / Postpone"
                         >
                           <PencilIcon className="w-4 h-4" />
                         </button>

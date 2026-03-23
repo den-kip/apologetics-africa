@@ -108,7 +108,7 @@ export class QuestionsController {
 
   @Patch(':id/reject')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.EDITOR)
   @ApiBearerAuth()
   reject(@Param('id', ParseUUIDPipe) id: string) {
     return this.questionsService.reject(id);
@@ -116,9 +116,9 @@ export class QuestionsController {
 
   @Patch(':id/lock')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.EDITOR)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Lock / unlock a question (admin)' })
+  @ApiOperation({ summary: 'Lock / unlock a question (admin/editor)' })
   lock(
     @Param('id', ParseUUIDPipe) id: string,
     @Body('locked') locked: boolean,
@@ -140,9 +140,9 @@ export class QuestionsController {
 
   @Patch(':id/hide')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.EDITOR)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Hide / unhide a question (admin)' })
+  @ApiOperation({ summary: 'Hide / unhide a question (admin/editor)' })
   hideQuestion(
     @Param('id', ParseUUIDPipe) id: string,
     @Body('hidden') hidden: boolean,
@@ -200,9 +200,9 @@ export class QuestionsController {
 
   @Patch(':questionId/comments/:commentId/hide')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.EDITOR)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Hide / unhide a comment (admin)' })
+  @ApiOperation({ summary: 'Hide / unhide a comment (admin/editor)' })
   hideComment(
     @Param('commentId', ParseUUIDPipe) commentId: string,
     @Body('hidden') hidden: boolean,

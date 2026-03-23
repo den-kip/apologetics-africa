@@ -8,6 +8,7 @@ export enum SessionStatus {
   SCHEDULED = 'scheduled',
   LIVE = 'live',
   ENDED = 'ended',
+  CANCELLED = 'cancelled',
 }
 
 @Entity('live_sessions')
@@ -32,6 +33,12 @@ export class LiveSession {
 
   @Column({ type: 'enum', enum: SessionStatus, default: SessionStatus.SCHEDULED })
   status: SessionStatus;
+
+  @Column({ type: 'text', nullable: true })
+  posterUrl: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  link: string | null;
 
   @OneToMany(() => ChatMessage, (m) => m.session)
   messages: ChatMessage[];

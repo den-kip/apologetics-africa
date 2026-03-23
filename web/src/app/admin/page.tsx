@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
   BookOpenIcon, QuestionMarkCircleIcon, PencilSquareIcon, UsersIcon,
-  SignalIcon, PlayIcon, StopIcon, PlusIcon,
+  SignalIcon, PlayIcon, StopIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/lib/auth';
 import { api, LiveSession } from '@/lib/api';
@@ -20,6 +20,7 @@ const quickLinks = [
   { label: 'Answer a Question', href: '/admin/questions' },
   { label: 'Write a Blog Post', href: '/admin/blog' },
   { label: 'Manage Users',      href: '/admin/users' },
+  { label: 'New Session',       href: '/admin/sessions' },
 ];
 
 // ─── Live session panel ───────────────────────────────────────────────────────
@@ -249,16 +250,12 @@ export default function AdminOverviewPage() {
       {/* Quick actions */}
       <div className="card p-6">
         <h2 className="font-semibold text-slate-800 mb-4">Quick Actions</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {quickLinks.map((l) => (
             <Link key={l.href} href={l.href} className="btn-secondary justify-center text-sm">
               {l.label}
             </Link>
           ))}
-          <Link href="/admin/sessions" className="btn-secondary justify-center text-sm flex items-center gap-1.5">
-            <PlusIcon className="w-4 h-4" />
-            New Session
-          </Link>
         </div>
       </div>
     </div>

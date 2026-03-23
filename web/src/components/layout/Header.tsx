@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
-import { Bars3Icon, XMarkIcon, UserCircleIcon, ArrowRightOnRectangleIcon, ChevronDownIcon, Cog6ToothIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, UserCircleIcon, ArrowRightOnRectangleIcon, ChevronDownIcon, Cog6ToothIcon, QuestionMarkCircleIcon, BookmarkIcon } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
@@ -93,6 +93,22 @@ export function Header() {
                         <QuestionMarkCircleIcon className="w-4 h-4 text-slate-400" />
                         My Questions
                       </Link>
+                      <Link
+                        href="/bookmarks"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <BookmarkIcon className="w-4 h-4 text-slate-400" />
+                        My Bookmarks
+                      </Link>
+                      <Link
+                        href="/settings"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <UserCircleIcon className="w-4 h-4 text-slate-400" />
+                        Account Settings
+                      </Link>
                       {user.role === 'admin' && (
                         <Link
                           href="/admin"
@@ -165,6 +181,12 @@ export function Header() {
                   </div>
                   <Link href="/questions" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50">
                     <QuestionMarkCircleIcon className="w-4 h-4 text-slate-400" /> My Questions
+                  </Link>
+                  <Link href="/bookmarks" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50">
+                    <BookmarkIcon className="w-4 h-4 text-slate-400" /> My Bookmarks
+                  </Link>
+                  <Link href="/settings" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50">
+                    <UserCircleIcon className="w-4 h-4 text-slate-400" /> Account Settings
                   </Link>
                   {user.role === 'admin' && (
                     <Link href="/admin" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50">

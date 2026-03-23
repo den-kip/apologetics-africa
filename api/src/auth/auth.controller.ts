@@ -55,10 +55,15 @@ export class AuthController {
     return {
       id: user.id,
       email: user.email,
+      firstName: user.firstName ?? null,
+      middleName: user.middleName ?? null,
+      lastName: user.lastName ?? null,
       name: user.name,
+      username: user.username ?? null,
       alias: user.alias ?? null,
       role: user.role,
-      avatar: user.avatar,
+      avatar: user.avatar ?? null,
+      active: user.active,
     };
   }
 }

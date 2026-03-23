@@ -1,6 +1,5 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  UpdateDateColumn, OneToMany,
+  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
@@ -18,14 +17,33 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column()
+  @Column({ nullable: true })
+  firstName: string;
+
+  @Column({ nullable: true })
+  middleName: string;
+
+  @Column({ nullable: true })
+  lastName: string;
+
+  // Kept for backwards compat (chat messages, comments use authorName from user.name)
+  @Column({ nullable: true })
   name: string;
+
+  @Column({ nullable: true, unique: true })
+  username: string;
 
   @Column({ nullable: true })
   avatar: string;
 
   @Column({ nullable: true })
   alias: string;
+
+  @Column({ default: true })
+  active: boolean;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  deactivatedAt: Date | null;
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;

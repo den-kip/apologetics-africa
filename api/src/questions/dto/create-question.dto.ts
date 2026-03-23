@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsOptional, IsBoolean, IsArray, IsEnum, MinLength } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsBoolean, IsArray, IsEnum, IsUUID, IsDateString, MinLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { QuestionCategory } from '../question.entity';
 
@@ -37,8 +37,13 @@ export class CreateQuestionDto {
   @IsEnum(QuestionCategory)
   category?: QuestionCategory;
 
-  @ApiPropertyOptional({ description: 'ID of related topic or theme' })
+  @ApiPropertyOptional({ description: 'UUID of related topic or theme' })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   topicId?: string;
+
+  @ApiPropertyOptional({ description: 'Date of related session (YYYY-MM-DD), used when category is session' })
+  @IsOptional()
+  @IsDateString()
+  sessionDate?: string;
 }

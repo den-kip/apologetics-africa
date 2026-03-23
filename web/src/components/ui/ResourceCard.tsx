@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 import type { Resource } from '@/lib/api';
+import { BookmarkButton } from './BookmarkButton';
 
 // ─── Type meta ────────────────────────────────────────────────────────────────
 
@@ -176,18 +177,21 @@ export function ResourceCard({ resource }: Props) {
             <EyeIcon className="w-3.5 h-3.5" />
             {resource.viewCount.toLocaleString()}
           </div>
-          <Link
-            href={href}
-            target={isExternal ? '_blank' : undefined}
-            rel={isExternal ? 'noopener noreferrer' : undefined}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700"
-          >
-            {isExternal ? (
-              <>Visit <ArrowTopRightOnSquareIcon className="w-3 h-3" /></>
-            ) : (
-              <>Read more →</>
-            )}
-          </Link>
+          <div className="flex items-center gap-2">
+            <BookmarkButton type="resource" targetId={resource.id} />
+            <Link
+              href={href}
+              target={isExternal ? '_blank' : undefined}
+              rel={isExternal ? 'noopener noreferrer' : undefined}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700"
+            >
+              {isExternal ? (
+                <>Visit <ArrowTopRightOnSquareIcon className="w-3 h-3" /></>
+              ) : (
+                <>Read more →</>
+              )}
+            </Link>
+          </div>
         </div>
       </div>
     </div>

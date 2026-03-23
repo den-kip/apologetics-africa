@@ -54,7 +54,8 @@ async function seed() {
   try {
     admin = await users.create({
       email: 'admin@apologeticsafrica.com',
-      name: 'Rev. Dr. John Njoroge',
+      firstName: 'John',
+      lastName: 'Njoroge',
       password: 'AdminPass123!',
       role: UserRole.ADMIN,
     });

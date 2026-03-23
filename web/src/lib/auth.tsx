@@ -7,10 +7,15 @@ const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 export interface AuthUser {
   id: string;
   name: string;
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
+  username?: string | null;
   alias?: string | null;
   email: string;
   role: 'admin' | 'editor' | 'user';
   avatar?: string;
+  active?: boolean;
 }
 
 interface AuthState {
@@ -18,7 +23,13 @@ interface AuthState {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, alias?: string) => Promise<void>;
+  register: (
+    firstName: string,
+    lastName: string,
+    email: string,
+    password: string,
+    options?: { middleName?: string; username?: string; alias?: string },
+  ) => Promise<void>;
   logout: () => void;
 }
 
@@ -69,11 +80,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   }, []);
 
-  const register = useCallback(async (name: string, email: string, password: string, alias?: string) => {
+  const register = useCallback(async (
+    firstName: string,
+    lastName: string,
+    email: string,
+    password: string,
+    options?: { middleName?: string; username?: string; alias?: string },
+  ) => {
     const res = await fetch(`${BASE}/api/v1/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, ...(alias ? { alias } : {}) }),
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        email,
+        password,
+        ...(options?.middleName ? { middleName: options.middleName } : {}),
+        ...(options?.username ? { username: options.username } : {}),
+        ...(options?.alias ? { alias: options.alias } : {}),
+      }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));

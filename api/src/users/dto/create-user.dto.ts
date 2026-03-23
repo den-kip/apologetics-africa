@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, IsOptional, IsEnum } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsOptional, IsEnum, Matches } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRole } from '../user.entity';
 
@@ -7,11 +7,30 @@ export class CreateUserDto {
   @IsEmail()
   email: string;
 
-  @ApiProperty({ example: 'John Doe' })
+  @ApiProperty({ example: 'Grace' })
   @IsString()
-  name: string;
+  firstName: string;
 
-  @ApiPropertyOptional({ example: 'Seeker123', description: 'Optional public display name (alias)' })
+  @ApiPropertyOptional({ example: 'Wanjiku' })
+  @IsOptional()
+  @IsString()
+  middleName?: string;
+
+  @ApiProperty({ example: 'Mwangi' })
+  @IsString()
+  lastName: string;
+
+  @ApiPropertyOptional({
+    example: 'grace_mwangi',
+    description: 'Optional unique username (3-30 chars, lowercase letters, numbers, underscores)',
+  })
+  @IsOptional()
+  @Matches(/^[a-z0-9_]{3,30}$/, {
+    message: 'Username must be 3-30 characters: lowercase letters, numbers, and underscores only',
+  })
+  username?: string;
+
+  @ApiPropertyOptional({ example: 'Seeker123', description: 'Optional public display alias' })
   @IsOptional()
   @IsString()
   alias?: string;

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   HomeIcon, BookOpenIcon, QuestionMarkCircleIcon,
   PencilSquareIcon, UsersIcon, ArrowLeftOnRectangleIcon,
-  ArrowRightOnRectangleIcon, Cog6ToothIcon, TagIcon, ShareIcon, SignalIcon,
+  ArrowRightOnRectangleIcon, CalendarDaysIcon, TagIcon, ShareIcon, SignalIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/lib/auth';
 import clsx from 'clsx';
@@ -20,7 +20,7 @@ const adminNav = [
   { label: 'Users',     href: '/admin/users',      icon: UsersIcon },
   { label: 'Sessions',  href: '/admin/sessions',   icon: SignalIcon },
   { label: 'Social',    href: '/admin/social',     icon: ShareIcon },
-  { label: 'Settings',  href: '/admin/settings',   icon: Cog6ToothIcon },
+  { label: 'Calendar',  href: '/admin/calendar',   icon: CalendarDaysIcon },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

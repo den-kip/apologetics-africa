@@ -1,12 +1,25 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { LiveSession, SessionStatus } from './live-session.entity';
 import { ChatMessage } from './chat-message.entity';
 import { ChatReaction } from './chat-reaction.entity';
 
+// Returns the 2nd and 4th Saturday of a given month
+function getSessionSaturdays(year: number, month: number): Date[] {
+  const saturdays: Date[] = [];
+  const d = new Date(year, month, 1);
+  while (d.getDay() !== 6) d.setDate(d.getDate() + 1);
+  while (d.getMonth() === month) {
+    saturdays.push(new Date(d));
+    d.setDate(d.getDate() + 7);
+  }
+  // 2nd Saturday = index 1, 4th Saturday = index 3
+  return [saturdays[1], saturdays[3]].filter(Boolean);
+}
+
 @Injectable()
-export class ChatService {
+export class ChatService implements OnModuleInit {
   constructor(
     @InjectRepository(LiveSession)
     private sessionRepo: Repository<LiveSession>,
@@ -25,7 +38,9 @@ export class ChatService {
     if (status) {
       qb.where('s.status = :status', { status });
     } else if (!includeEnded) {
-      qb.where('s.status != :ended', { ended: SessionStatus.ENDED });
+      qb.where('s.status NOT IN (:...exclude)', {
+        exclude: [SessionStatus.ENDED, SessionStatus.CANCELLED],
+      });
     }
 
     return qb.getMany();
@@ -48,17 +63,30 @@ export class ChatService {
     title: string,
     description?: string,
     scheduledAt?: Date,
+    posterUrl?: string,
+    link?: string,
   ): Promise<LiveSession> {
-    const session = this.sessionRepo.create({ title, description, scheduledAt });
+    const session = this.sessionRepo.create({ title, description, scheduledAt, posterUrl: posterUrl ?? null, link: link ?? null });
     return this.sessionRepo.save(session);
   }
 
-  async updateSession(id: string, data: { title?: string; description?: string; scheduledAt?: string }): Promise<LiveSession> {
+  async updateSession(id: string, data: { title?: string; description?: string; scheduledAt?: string; posterUrl?: string; link?: string }): Promise<LiveSession> {
     const session = await this.sessionRepo.findOneOrFail({ where: { id } });
     if (data.title !== undefined) session.title = data.title;
     if (data.description !== undefined) session.description = data.description;
     if (data.scheduledAt !== undefined) session.scheduledAt = data.scheduledAt ? new Date(data.scheduledAt) : null;
+    if (data.posterUrl !== undefined) session.posterUrl = data.posterUrl || null;
+    if (data.link !== undefined) session.link = data.link || null;
     return this.sessionRepo.save(session);
+  }
+
+  async getNextSession(): Promise<LiveSession | null> {
+    return this.sessionRepo
+      .createQueryBuilder('s')
+      .where('s.status = :status', { status: SessionStatus.SCHEDULED })
+      .andWhere('s.scheduledAt > :now', { now: new Date() })
+      .orderBy('s.scheduledAt', 'ASC')
+      .getOne();
   }
 
   async startSession(id: string): Promise<LiveSession> {
@@ -77,6 +105,55 @@ export class ChatService {
 
   async removeSession(id: string): Promise<void> {
     await this.sessionRepo.delete(id);
+  }
+
+  async cancelSession(id: string): Promise<LiveSession> {
+    const session = await this.sessionRepo.findOneOrFail({ where: { id } });
+    session.status = SessionStatus.CANCELLED;
+    return this.sessionRepo.save(session);
+  }
+
+  async generateUpcomingSessions(monthsAhead = 2): Promise<{ created: number }> {
+    const now = new Date();
+    let created = 0;
+
+    for (let offset = 0; offset <= monthsAhead; offset++) {
+      const year = now.getFullYear() + Math.floor((now.getMonth() + offset) / 12);
+      const month = (now.getMonth() + offset) % 12;
+
+      for (const saturday of getSessionSaturdays(year, month)) {
+        // Skip Saturdays that have already passed
+        if (saturday < now) continue;
+
+        // Check if a session already exists on this date (any status)
+        const dayStart = new Date(saturday);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(saturday);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        const existing = await this.sessionRepo.findOne({
+          where: { scheduledAt: Between(dayStart, dayEnd) },
+        });
+
+        if (!existing) {
+          const label = saturday.toLocaleDateString('en-US', {
+            weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+          });
+          // Default session time: 10:00 AM
+          saturday.setHours(10, 0, 0, 0);
+          await this.sessionRepo.save(
+            this.sessionRepo.create({ title: `Session — ${label}`, scheduledAt: saturday }),
+          );
+          created++;
+        }
+      }
+    }
+
+    return { created };
+  }
+
+  async onModuleInit() {
+    await this.generateUpcomingSessions(2);
   }
 
   // ─── Messages ─────────────────────────────────────────────────────────────

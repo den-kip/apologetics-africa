@@ -11,7 +11,9 @@ export default function SignupPage() {
   const { register } = useAuth();
 
   const [firstName, setFirstName] = useState('');
+  const [middleName, setMiddleName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [username, setUsername] = useState('');
   const [alias, setAlias] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,8 +26,11 @@ export default function SignupPage() {
     setError('');
     setLoading(true);
     try {
-      const name = `${firstName.trim()} ${lastName.trim()}`.trim();
-      await register(name, email, password, alias || undefined);
+      await register(firstName.trim(), lastName.trim(), email, password, {
+        middleName: middleName.trim() || undefined,
+        username: username.trim() || undefined,
+        alias: alias.trim() || undefined,
+      });
       router.push('/questions');
     } catch (err: any) {
       setError(err.message || 'Registration failed');
@@ -52,7 +57,7 @@ export default function SignupPage() {
 
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Name */}
+            {/* First and Last Name */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -81,7 +86,43 @@ export default function SignupPage() {
                 />
               </div>
             </div>
+
+            {/* Middle Name */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Middle Name <span className="text-slate-400 font-normal">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={middleName}
+                onChange={(e) => setMiddleName(e.target.value)}
+                className="input-field"
+                placeholder="Wanjiku"
+              />
+            </div>
             <p className="text-xs text-slate-400 -mt-3">Used for account purposes only — not shown publicly.</p>
+
+            {/* Username */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Username <span className="text-slate-400 font-normal">(optional)</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">@</span>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                  className="input-field pl-7"
+                  placeholder="grace_mwangi"
+                  pattern="^[a-z0-9_]{3,30}$"
+                  title="3-30 characters: lowercase letters, numbers, and underscores only"
+                />
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                3–30 characters. Lowercase letters, numbers, and underscores only.
+              </p>
+            </div>
 
             {/* Alias */}
             <div>

@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { CheckCircleIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
+import {
+  CheckCircleIcon, PaperAirplaneIcon, ShieldCheckIcon,
+  EyeSlashIcon, EyeIcon, XCircleIcon, LockClosedIcon, LockOpenIcon,
+} from '@heroicons/react/24/outline';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { QuestionCard } from '@/components/ui/QuestionCard';
 import { Pagination } from '@/components/ui/Pagination';
@@ -77,10 +81,11 @@ const CATEGORIES: { value: QuestionCategory | 'all'; label: string }[] = [
   { value: 'general', label: 'General' },
 ];
 
-type MainTab = 'browse' | 'mine';
+type MainTab = 'browse' | 'mine' | 'review';
 
 export default function QuestionsPage() {
   const { user, token } = useAuth();
+  const isAdmin = user?.role === 'admin' || user?.role === 'editor';
   const searchParams = useSearchParams();
   const [mainTab, setMainTab] = useState<MainTab>(
     searchParams.get('tab') === 'mine' ? 'mine' : 'browse',
@@ -98,11 +103,18 @@ export default function QuestionsPage() {
   const [myLoading, setMyLoading] = useState(false);
   const [myPage, setMyPage] = useState(1);
 
+  // Review queue tab state (admin/editor only)
+  const [reviewResult, setReviewResult] = useState<PaginatedResponse<Question> | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewPage, setReviewPage] = useState(1);
+  const [reviewActionId, setReviewActionId] = useState<string | null>(null);
+
   // Form state
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [formError, setFormError] = useState('');
   const [formCategory, setFormCategory] = useState<QuestionCategory>('general');
+  const [formSessionDate, setFormSessionDate] = useState('');
   const [topics, setTopics] = useState<Topic[]>([]);
   const sessionOptions = getSessionOptions();
 
@@ -145,6 +157,41 @@ export default function QuestionsPage() {
       .finally(() => setMyLoading(false));
   }, [mainTab, token, myPage]);
 
+  // Review queue (admin/editor)
+  const fetchReview = useCallback(() => {
+    if (!token || !isAdmin) return;
+    setReviewLoading(true);
+    api.admin.questions.list({ page: reviewPage, limit: 20, status: 'pending' }, token)
+      .then(setReviewResult)
+      .catch(console.error)
+      .finally(() => setReviewLoading(false));
+  }, [token, isAdmin, reviewPage]);
+
+  useEffect(() => {
+    if (mainTab === 'review') fetchReview();
+  }, [mainTab, fetchReview]);
+
+  async function handleReviewReject(id: string) {
+    if (!token || !confirm('Reject this question?')) return;
+    setReviewActionId(id);
+    try { await api.questions.reject(id, token); fetchReview(); }
+    finally { setReviewActionId(null); }
+  }
+
+  async function handleReviewHide(id: string, hidden: boolean) {
+    if (!token) return;
+    setReviewActionId(id);
+    try { await api.questions.hide(id, hidden, token); fetchReview(); }
+    finally { setReviewActionId(null); }
+  }
+
+  async function handleReviewLock(id: string, locked: boolean) {
+    if (!token) return;
+    setReviewActionId(id);
+    try { await api.questions.lock(id, locked, token); fetchReview(); }
+    finally { setReviewActionId(null); }
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setFormError('');
@@ -158,13 +205,15 @@ export default function QuestionsPage() {
       askerEmail: data.askerEmail,
       anonymous: data.anonymous === 'on',
       category: formCategory,
-      topicId: data.topicId || undefined,
+      topicId: formCategory !== 'session' ? (data.topicId || undefined) : undefined,
+      sessionDate: formCategory === 'session' ? (data.topicId || undefined) : undefined,
     };
     try {
       await api.questions.submit(payload);
       setSubmitted(true);
       form.reset();
       setFormCategory('general');
+      setFormSessionDate('');
     } catch (err: any) {
       setFormError(err.message || 'Something went wrong. Please try again.');
     } finally {
@@ -206,6 +255,17 @@ export default function QuestionsPage() {
             >
               My Questions
             </button>
+            {isAdmin && (
+              <button
+                onClick={() => setMainTab('review')}
+                className={`px-5 py-2 text-sm rounded-lg transition-colors font-medium flex items-center gap-1.5 ${
+                  mainTab === 'review' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <ShieldCheckIcon className="w-3.5 h-3.5" />
+                Review Queue
+              </button>
+            )}
           </div>
         )}
 
@@ -259,6 +319,98 @@ export default function QuestionsPage() {
               <div className="text-center py-16 text-slate-400">
                 <p className="mb-4">You haven't submitted any questions yet.</p>
                 <a href="#ask" className="btn-secondary text-sm">Ask Your First Question</a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Review Queue tab (admin/editor only) ── */}
+        {mainTab === 'review' && isAdmin && (
+          <div>
+            <div className="flex items-center gap-2 mb-6">
+              <ShieldCheckIcon className="w-5 h-5 text-brand-600" />
+              <h2 className="text-base font-semibold text-slate-900">Pending Questions</h2>
+              {reviewResult && (
+                <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                  {reviewResult.total}
+                </span>
+              )}
+            </div>
+            {reviewLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="h-20 rounded-xl bg-slate-100 animate-pulse" />
+                ))}
+              </div>
+            ) : reviewResult && reviewResult.data.length > 0 ? (
+              <div className="space-y-3">
+                {reviewResult.data.map((q) => (
+                  <div key={q.id} className={`card p-5 flex items-start gap-4 ${q.hidden ? 'opacity-60' : ''}`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700">
+                          Pending
+                        </span>
+                        <span className="text-xs text-slate-400 capitalize">{q.category}</span>
+                        {q.hidden && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">hidden</span>
+                        )}
+                        {q.locked && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">locked</span>
+                        )}
+                        <span className="text-xs text-slate-400 ml-auto">
+                          {new Date(q.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      </div>
+                      <p className="font-medium text-slate-800 line-clamp-2">{q.title}</p>
+                      {q.body && (
+                        <p className="text-xs text-slate-500 mt-1 line-clamp-1">{q.body}</p>
+                      )}
+                      <p className="text-xs text-slate-400 mt-1">— {q.askerName}</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Link
+                        href={`/admin/questions/${q.id}`}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium text-brand-600 border border-brand-200 hover:bg-brand-50 transition-colors"
+                        title="Open in admin"
+                      >
+                        Answer
+                      </Link>
+                      <button
+                        onClick={() => handleReviewLock(q.id, !q.locked)}
+                        disabled={reviewActionId === q.id}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-40"
+                        title={q.locked ? 'Unlock' : 'Lock'}
+                      >
+                        {q.locked ? <LockOpenIcon className="w-4 h-4" /> : <LockClosedIcon className="w-4 h-4" />}
+                      </button>
+                      <button
+                        onClick={() => handleReviewHide(q.id, !q.hidden)}
+                        disabled={reviewActionId === q.id}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition-colors disabled:opacity-40"
+                        title={q.hidden ? 'Unhide' : 'Hide'}
+                      >
+                        {q.hidden ? <EyeIcon className="w-4 h-4" /> : <EyeSlashIcon className="w-4 h-4" />}
+                      </button>
+                      <button
+                        onClick={() => handleReviewReject(q.id)}
+                        disabled={reviewActionId === q.id}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors disabled:opacity-40"
+                        title="Reject"
+                      >
+                        <XCircleIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {reviewResult.pages > 1 && (
+                  <Pagination page={reviewResult.page} pages={reviewResult.pages} onPage={setReviewPage} />
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-16 text-slate-400">
+                <CheckCircleIcon className="w-10 h-10 mx-auto mb-3 text-green-400" />
+                <p>No pending questions — all caught up!</p>
               </div>
             )}
           </div>
@@ -364,7 +516,7 @@ export default function QuestionsPage() {
                 <select
                   name="category"
                   value={formCategory}
-                  onChange={(e) => setFormCategory(e.target.value as QuestionCategory)}
+                  onChange={(e) => { setFormCategory(e.target.value as QuestionCategory); setFormSessionDate(''); }}
                   className="input-field"
                 >
                   <option value="general">General — open apologetics question</option>
@@ -395,14 +547,20 @@ export default function QuestionsPage() {
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
                     Session Date
                   </label>
-                  <select name="topicId" className="input-field">
-                    <option value="">— Select a session date (optional)</option>
+                  <select
+                    name="topicId"
+                    required
+                    className="input-field"
+                    value={formSessionDate}
+                    onChange={(e) => setFormSessionDate(e.target.value)}
+                  >
+                    <option value="">— Select a session date</option>
                     {sessionOptions.map((s) => (
                       <option key={s.value} value={s.value}>{s.label}</option>
                     ))}
                   </select>
                   <p className="text-xs text-slate-400 mt-1">
-                    Link your question to a specific Saturday Session.
+                    Select the Saturday Session your question is for.
                   </p>
                 </div>
               )}
@@ -445,7 +603,7 @@ export default function QuestionsPage() {
                 <p className="text-sm text-rose-600 bg-rose-50 px-4 py-3 rounded-lg">{formError}</p>
               )}
 
-              <button type="submit" disabled={submitting} className="btn-primary w-full justify-center">
+              <button type="submit" disabled={submitting || (formCategory === 'session' && !formSessionDate)} className="btn-primary w-full justify-center">
                 <PaperAirplaneIcon className="w-4 h-4" />
                 {submitting ? 'Sending…' : 'Submit Question'}
               </button>

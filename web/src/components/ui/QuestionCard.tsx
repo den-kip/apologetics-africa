@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { CheckCircleIcon, EyeIcon } from '@heroicons/react/24/outline';
 import type { Question } from '@/lib/api';
+import { BookmarkButton } from './BookmarkButton';
 
 interface Props {
   question: Question;
@@ -48,9 +49,12 @@ export function QuestionCard({ question }: Props) {
             ? `Answered ${new Date(question.answeredAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
             : 'Recently answered'}
         </span>
-        <span className="text-xs font-medium text-brand-600 group-hover:text-brand-700">
-          Read →
-        </span>
+        <div className="flex items-center gap-1">
+          <BookmarkButton type="question" targetId={question.id} />
+          <span className="text-xs font-medium text-brand-600 group-hover:text-brand-700">
+            Read →
+          </span>
+        </div>
       </div>
     </Link>
   );

@@ -2,7 +2,7 @@
 
 import { useMemo, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CalendarDaysIcon, ClockIcon, MapPinIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, ClockIcon, MapPinIcon, ArrowRightIcon, ArrowDownTrayIcon, ShareIcon } from '@heroicons/react/24/outline';
 import { clsx } from 'clsx';
 
 // ─── Shared settings hook ────────────────────────────────────────────────────
@@ -44,6 +44,31 @@ function useSessionSettings(): SessionSettings {
   }, []);
 
   return settings;
+}
+
+// ─── Next session hook (fetches from API) ────────────────────────────────────
+
+interface NextSession {
+  id: string;
+  title: string;
+  description?: string;
+  scheduledAt?: string;
+  posterUrl?: string | null;
+  link?: string | null;
+}
+
+function useNextSession(): NextSession | null {
+  const [session, setSession] = useState<NextSession | null>(null);
+
+  useEffect(() => {
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    fetch(`${base}/api/v1/sessions/next`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setSession(data || null))
+      .catch(() => {});
+  }, []);
+
+  return session;
 }
 
 // ─── Calendar helpers ─────────────────────────────────────────────────────────
@@ -105,17 +130,24 @@ interface Props {
 /** Slim announcement strip — place immediately after <Hero /> */
 export function NextSessionBanner() {
   const settings = useSessionSettings();
+  const nextSession = useNextSession();
   const events = useMemo(() => getUpcomingEvents(1), []);
-  const next = events[0];
-  if (!next) return null;
 
-  const dateStr = next.toLocaleDateString('en-US', {
+  // Use scheduled session date if available, else fall back to computed Saturday
+  const nextDate = nextSession?.scheduledAt
+    ? new Date(nextSession.scheduledAt)
+    : events[0];
+
+  if (!nextDate) return null;
+
+  const dateStr = nextDate.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
   });
-  const today = isToday(next);
-  const soon = isThisWeek(next);
+  const today = isToday(nextDate);
+  const soon = isThisWeek(nextDate);
+  const title = nextSession?.title || settings.topic;
 
   return (
     <div className="bg-gradient-to-r from-brand-900 via-brand-800 to-brand-900 border-y border-brand-700/60">
@@ -126,17 +158,17 @@ export function NextSessionBanner() {
             {today ? 'Tonight!' : soon ? 'This Saturday' : 'Saturday Session'}
           </span>
           <span className="text-white font-medium">
-            <strong className="text-gold-300">{settings.topic}</strong>
+            <strong className="text-gold-300">{title}</strong>
             <span className="text-blue-200 ml-2">·</span>
             <span className="text-blue-200 ml-2">{dateStr}</span>
             <span className="text-blue-300 ml-2">at {settings.time}</span>
           </span>
         </div>
         <Link
-          href="/questions#ask"
+          href={nextSession?.link || '/questions#ask'}
           className="flex items-center gap-1.5 text-xs font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-full transition-colors shrink-0"
         >
-          Submit a Question
+          {nextSession?.link ? 'Join Session' : 'Submit a Question'}
           <ArrowRightIcon className="w-3.5 h-3.5" />
         </Link>
       </div>
@@ -146,7 +178,11 @@ export function NextSessionBanner() {
 
 export function EventsCalendar({ variant = 'section' }: Props) {
   const settings = useSessionSettings();
+  const nextSession = useNextSession();
   const events = useMemo(() => getUpcomingEvents(3), []);
+
+  // Prefer the session's poster over the global settings poster
+  const posterSrc = nextSession?.posterUrl || settings.poster;
 
   if (variant === 'card') {
     return (
@@ -159,18 +195,20 @@ export function EventsCalendar({ variant = 'section' }: Props) {
               Upcoming Sessions
             </span>
           </div>
-          <p className="text-white font-semibold text-sm leading-snug">{settings.topic}</p>
+          <p className="text-white font-semibold text-sm leading-snug">
+            {nextSession?.title || settings.topic}
+          </p>
           <p className="text-blue-200 text-xs mt-1">
             2nd &amp; 4th Saturday · {settings.time}
           </p>
         </div>
 
         {/* Poster */}
-        {settings.poster && (
+        {posterSrc && (
           <div className="border-b border-slate-100">
             <img
-              src={settings.poster}
-              alt={`Session poster — ${settings.topic}`}
+              src={posterSrc}
+              alt={`Session poster — ${nextSession?.title || settings.topic}`}
               className="w-full object-contain"
             />
           </div>
@@ -249,11 +287,20 @@ export function EventsCalendar({ variant = 'section' }: Props) {
 
             <div className="bg-white/10 border border-white/20 rounded-2xl p-6 mb-6 backdrop-blur-sm">
               <p className="text-xs font-semibold uppercase tracking-widest text-blue-300 mb-2">
-                Current Topic
+                {nextSession ? 'Next Session' : 'Current Topic'}
               </p>
-              <p className="text-xl font-bold text-white">{settings.topic}</p>
+              <p className="text-xl font-bold text-white">
+                {nextSession?.title || settings.topic}
+              </p>
+              {nextSession?.scheduledAt && (
+                <p className="text-blue-300 text-sm mt-1">
+                  {new Date(nextSession.scheduledAt).toLocaleDateString('en-US', {
+                    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+                  })}
+                </p>
+              )}
               <p className="text-blue-200 text-sm mt-2 leading-relaxed">
-                {settings.description}
+                {nextSession?.description || settings.description}
               </p>
             </div>
 
@@ -313,7 +360,7 @@ export function EventsCalendar({ variant = 'section' }: Props) {
                         )}
                       </p>
                       <p className="text-sm text-blue-200 mt-0.5">
-                        {settings.time} · {settings.topic}
+                        {settings.time} · {nextSession?.title || settings.topic}
                       </p>
                     </div>
                   </div>
@@ -321,19 +368,65 @@ export function EventsCalendar({ variant = 'section' }: Props) {
               })}
             </div>
 
-            <Link href="/questions#ask" className="btn-primary bg-white text-brand-800 hover:bg-blue-50">
-              Submit a Question for the Session
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/questions#ask" className="btn-primary bg-white text-brand-800 hover:bg-blue-50">
+                Submit a Question for the Session
+              </Link>
+              {nextSession?.link && (
+                <a
+                  href={nextSession.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary bg-gold-500 hover:bg-gold-400 text-brand-900 border-transparent"
+                >
+                  Join Session →
+                </a>
+              )}
+            </div>
           </div>
 
           {/* Right: poster */}
-          {settings.poster && (
+          {posterSrc && (
             <div className="rounded-2xl overflow-hidden border border-white/10 shadow-xl sticky top-8">
               <img
-                src={settings.poster}
-                alt={`Session poster — ${settings.topic}`}
+                src={posterSrc}
+                alt={`Session poster — ${nextSession?.title || settings.topic}`}
                 className="w-full object-contain"
               />
+              {/* Download / Share actions */}
+              <div className="flex items-center gap-2 px-4 py-3 bg-white/5 border-t border-white/10">
+                <a
+                  href={posterSrc}
+                  download
+                  className="flex items-center gap-1.5 text-xs font-medium text-blue-200 hover:text-white transition-colors"
+                >
+                  <ArrowDownTrayIcon className="w-4 h-4" />
+                  Download
+                </a>
+                <span className="text-white/20">·</span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const title = nextSession?.title || settings.topic;
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({
+                          title: `Session: ${title}`,
+                          text: `Join us for "${title}" — an Apologetics Africa Saturday session.`,
+                          url: window.location.href,
+                        });
+                      } catch {}
+                    } else {
+                      await navigator.clipboard.writeText(window.location.href);
+                      alert('Link copied to clipboard!');
+                    }
+                  }}
+                  className="flex items-center gap-1.5 text-xs font-medium text-blue-200 hover:text-white transition-colors"
+                >
+                  <ShareIcon className="w-4 h-4" />
+                  Share
+                </button>
+              </div>
             </div>
           )}
         </div>
