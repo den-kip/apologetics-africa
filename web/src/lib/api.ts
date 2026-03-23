@@ -313,7 +313,7 @@ export interface QuestionComment {
   body: string;
   questionId: string;
   authorId?: string;
-  author?: { id: string; name: string; alias?: string | null; avatar?: string };
+  author?: { id: string; name: string; username?: string | null; avatar?: string };
   reactions: CommentReaction[];
   hidden: boolean;
   createdAt: string;
@@ -344,7 +344,6 @@ export interface AdminUser {
   lastName?: string;
   username?: string;
   email: string;
-  alias?: string | null;
   role: string;
   active: boolean;
   createdAt: string;

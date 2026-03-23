@@ -129,7 +129,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const msg = await this.chatService.sendMessage(
         data.sessionId,
         user.id,
-        user.alias || user.name,
+        user.username || user.name,
         data.body.trim(),
         data.replyToId,
       );

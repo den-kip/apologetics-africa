@@ -60,7 +60,6 @@ export class AuthController {
       lastName: user.lastName ?? null,
       name: user.name,
       username: user.username ?? null,
-      alias: user.alias ?? null,
       role: user.role,
       avatar: user.avatar ?? null,
       active: user.active,

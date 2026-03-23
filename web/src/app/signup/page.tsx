@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { UserCircleIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/lib/auth';
 
 export default function SignupPage() {
@@ -14,22 +14,28 @@ export default function SignupPage() {
   const [middleName, setMiddleName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
-  const [alias, setAlias] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setLoading(true);
     try {
       await register(firstName.trim(), lastName.trim(), email, password, {
         middleName: middleName.trim() || undefined,
         username: username.trim() || undefined,
-        alias: alias.trim() || undefined,
       });
       router.push('/questions');
     } catch (err: any) {
@@ -99,10 +105,10 @@ export default function SignupPage() {
                 className="input-field"
                 placeholder="Wanjiku"
               />
+              <p className="text-xs text-slate-400 mt-1">Used for account purposes only — not shown publicly.</p>
             </div>
-            <p className="text-xs text-slate-400 -mt-3">Used for account purposes only — not shown publicly.</p>
 
-            {/* Username */}
+            {/* Username / public alias */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">
                 Username <span className="text-slate-400 font-normal">(optional)</span>
@@ -120,27 +126,7 @@ export default function SignupPage() {
                 />
               </div>
               <p className="text-xs text-slate-400 mt-1">
-                3–30 characters. Lowercase letters, numbers, and underscores only.
-              </p>
-            </div>
-
-            {/* Alias */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                <span className="flex items-center gap-1.5">
-                  <UserCircleIcon className="w-4 h-4 text-slate-400" />
-                  Public Alias <span className="text-slate-400 font-normal">(optional)</span>
-                </span>
-              </label>
-              <input
-                type="text"
-                value={alias}
-                onChange={(e) => setAlias(e.target.value)}
-                className="input-field"
-                placeholder="e.g. Seeker123 or leave blank to use your name"
-              />
-              <p className="text-xs text-slate-400 mt-1">
-                This is the name others will see on your comments. Leave blank to display your full name.
+                This is your public alias — the name others see on your comments and questions. Leave blank to use your full name.
               </p>
             </div>
 
@@ -173,24 +159,56 @@ export default function SignupPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="input-field pr-10"
                   placeholder="At least 8 characters"
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
-                  {showPassword
-                    ? <EyeSlashIcon className="w-4 h-4" />
-                    : <EyeIcon className="w-4 h-4" />}
+                  {showPassword ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
                 </button>
               </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Confirm Password <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type={showConfirm ? 'text' : 'password'}
+                  required
+                  minLength={8}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className={`input-field pr-10 ${confirmPassword && confirmPassword !== password ? 'border-rose-300 focus:ring-rose-400' : ''}`}
+                  placeholder="Repeat your password"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showConfirm ? <EyeSlashIcon className="w-4 h-4" /> : <EyeIcon className="w-4 h-4" />}
+                </button>
+              </div>
+              {confirmPassword && confirmPassword !== password && (
+                <p className="text-xs text-rose-500 mt-1">Passwords do not match</p>
+              )}
             </div>
 
             {error && (
               <p className="text-sm text-rose-600 bg-rose-50 px-4 py-3 rounded-lg">{error}</p>
             )}
 
-            <button type="submit" disabled={loading} className="btn-primary w-full justify-center">
+            <button
+              type="submit"
+              disabled={loading || (!!confirmPassword && confirmPassword !== password)}
+              className="btn-primary w-full justify-center disabled:opacity-50"
+            >
               {loading ? 'Creating account…' : 'Create Account'}
             </button>
           </form>

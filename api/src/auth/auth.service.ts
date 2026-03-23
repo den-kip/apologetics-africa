@@ -72,7 +72,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
-        alias: user.alias ?? null,
+        username: user.username ?? null,
         role: user.role,
         avatar: user.avatar,
       },

@@ -123,8 +123,8 @@ export default function AdminUsersPage() {
                   >
                     <td className="px-4 py-3">
                       <p className="font-medium text-slate-800">{u.name}</p>
-                      {u.alias && (
-                        <p className="text-xs text-slate-400 mt-0.5">@{u.alias}</p>
+                      {u.username && (
+                        <p className="text-xs text-slate-400 mt-0.5">@{u.username}</p>
                       )}
                     </td>
                     <td className="px-4 py-3 text-slate-600">{u.email}</td>

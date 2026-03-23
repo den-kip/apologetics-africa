@@ -430,7 +430,7 @@ export default function AdminQuestionDetailPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-medium text-slate-700">
-                      {c.author?.alias ?? c.author?.name ?? 'Unknown'}
+                      {c.author?.username ?? c.author?.name ?? 'Unknown'}
                     </span>
                     <span className="text-xs text-slate-400">
                       {new Date(c.createdAt).toLocaleDateString()}

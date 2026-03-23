@@ -180,7 +180,7 @@ export default function SettingsPage() {
                 />
               </div>
               <p className="text-xs text-slate-400 mt-1">
-                3–30 characters. Lowercase letters, numbers, and underscores only.
+                Your public alias — shown on comments and questions. 3–30 characters, lowercase letters, numbers, and underscores only.
               </p>
             </div>
 

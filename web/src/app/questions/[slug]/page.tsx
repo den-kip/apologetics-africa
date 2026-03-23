@@ -448,7 +448,7 @@ export default function QuestionDetailPage() {
                         <div className={`rounded-xl p-4 border ${c.hidden ? 'bg-slate-100 border-slate-200' : 'bg-slate-50 border-slate-100'}`}>
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-sm font-medium text-slate-700 flex items-center gap-1.5">
-                              {c.author?.alias || c.author?.name || 'Anonymous'}
+                              {c.author?.username || c.author?.name || 'Anonymous'}
                               {c.hidden && (
                                 <span className="text-xs font-normal text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded">hidden</span>
                               )}

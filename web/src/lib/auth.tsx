@@ -11,7 +11,6 @@ export interface AuthUser {
   middleName?: string | null;
   lastName?: string | null;
   username?: string | null;
-  alias?: string | null;
   email: string;
   role: 'admin' | 'editor' | 'user';
   avatar?: string;
@@ -28,7 +27,7 @@ interface AuthState {
     lastName: string,
     email: string,
     password: string,
-    options?: { middleName?: string; username?: string; alias?: string },
+    options?: { middleName?: string; username?: string },
   ) => Promise<void>;
   logout: () => void;
 }
@@ -85,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     lastName: string,
     email: string,
     password: string,
-    options?: { middleName?: string; username?: string; alias?: string },
+    options?: { middleName?: string; username?: string },
   ) => {
     const res = await fetch(`${BASE}/api/v1/auth/register`, {
       method: 'POST',
@@ -97,7 +96,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
         ...(options?.middleName ? { middleName: options.middleName } : {}),
         ...(options?.username ? { username: options.username } : {}),
-        ...(options?.alias ? { alias: options.alias } : {}),
       }),
     });
     if (!res.ok) {

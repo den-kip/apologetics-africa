@@ -423,7 +423,7 @@ export default function LiveChatPage({ params }: Props) {
             )}
 
             <p className="mt-1.5 text-[11px] text-slate-700 text-right">
-              As <span className="text-slate-600">{user?.alias || user?.name}</span>
+              As <span className="text-slate-600">{user?.username || user?.name}</span>
               {' · '}Enter to send · Shift+Enter for new line
             </p>
           </div>
