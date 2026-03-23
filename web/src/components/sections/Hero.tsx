@@ -8,10 +8,10 @@ export function Hero() {
       {/* Background image */}
       <div className="absolute inset-0 -z-10">
         <Image
-          src="https://images.unsplash.com/photo-1611348586804-61bf6c080437?auto=format&fit=crop&w=1600&q=80"
-          alt=""
+          src="https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&w=1600&q=80"
+          alt="Mount Kilimanjaro"
           fill
-          className="object-cover object-center"
+          className="object-cover object-[center_60%]"
           priority
           sizes="100vw"
         />

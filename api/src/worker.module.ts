@@ -6,6 +6,7 @@ import { User } from './users/user.entity';
 import { Resource } from './resources/resource.entity';
 import { Question } from './questions/question.entity';
 import { BlogPost } from './blog/post.entity';
+import { Topic } from './topics/topic.entity';
 import { MailModule } from './mail/mail.module';
 import appConfig from './config/app.config';
 
@@ -21,7 +22,7 @@ import appConfig from './config/app.config';
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
         url: config.get('DATABASE_URL'),
-        entities: [User, Resource, Question, BlogPost],
+        entities: [User, Resource, Question, BlogPost, Topic],
         synchronize: false,
       }),
     }),

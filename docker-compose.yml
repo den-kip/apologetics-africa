@@ -89,7 +89,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: npm run start:worker
+    command: npm run start:worker:dev
 
   web:
     build:
