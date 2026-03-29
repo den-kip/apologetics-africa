@@ -45,7 +45,7 @@ export function Header() {
         <div className="container-xl flex items-center justify-between h-24">
           {/* Logo */}
           <Link href="/" className="shrink-0">
-            <img src="/logo.jpeg" alt="Apologetics Africa" className="h-20 w-auto my-1 mx-1" />
+            <img src="/logo.png" alt="Apologetics Africa" className="h-20 w-auto my-1 mx-1" />
           </Link>
 
           {/* Desktop Nav */}
