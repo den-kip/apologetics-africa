@@ -29,10 +29,12 @@ export class ResourcesController {
   @ApiQuery({ name: 'bookOfBible', required: false })
   @ApiQuery({ name: 'year', required: false })
   @ApiQuery({ name: 'month', required: false })
+  @ApiQuery({ name: 'excludeTypes', required: false, description: 'Comma-separated list of types to exclude' })
   findAll(
     @Query('page') page = 1,
     @Query('limit') limit = 12,
     @Query('type') type?: ResourceType,
+    @Query('excludeTypes') excludeTypesStr?: string,
     @Query('category') category?: ResourceCategory,
     @Query('search') search?: string,
     @Query('tag') tag?: string,
@@ -40,8 +42,11 @@ export class ResourcesController {
     @Query('year') year?: number,
     @Query('month') month?: number,
   ) {
+    const excludeTypes = excludeTypesStr
+      ? (excludeTypesStr.split(',').map(t => t.trim()) as ResourceType[])
+      : undefined;
     return this.resourcesService.findAll({
-      page: +page, limit: +limit, type, category, search,
+      page: +page, limit: +limit, type, excludeTypes, category, search,
       tag, bookOfBible, year: year ? +year : undefined, month: month ? +month : undefined,
     });
   }

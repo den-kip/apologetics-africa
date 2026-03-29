@@ -31,6 +31,7 @@ export class ResourcesService {
     page?: number;
     limit?: number;
     type?: ResourceType;
+    excludeTypes?: ResourceType[];
     category?: ResourceCategory;
     search?: string;
     tag?: string;
@@ -41,7 +42,7 @@ export class ResourcesService {
     published?: boolean;
   }) {
     const {
-      page = 1, limit = 12, type, category, search,
+      page = 1, limit = 12, type, excludeTypes, category, search,
       tag, bookOfBible, year, month, featured,
     } = opts;
     const published = 'published' in opts ? opts.published : true;
@@ -57,6 +58,9 @@ export class ResourcesService {
 
     if (published !== undefined) qb.andWhere('resource.published = :published', { published });
     if (type) qb.andWhere('resource.type = :type', { type });
+    if (excludeTypes && excludeTypes.length > 0) {
+      qb.andWhere('resource.type NOT IN (:...excludeTypes)', { excludeTypes });
+    }
     if (category) qb.andWhere('resource.category = :category', { category });
     if (search) qb.andWhere('resource.title ILIKE :search', { search: `%${search}%` });
     if (featured !== undefined) qb.andWhere('resource.featured = :featured', { featured });

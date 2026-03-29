@@ -42,15 +42,10 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-100 shadow-sm">
-        <div className="container-xl flex items-center justify-between h-16">
+        <div className="container-xl flex items-center justify-between h-24">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-brand-700 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">AA</span>
-            </div>
-            <span className="font-semibold text-slate-900 text-base hidden sm:block">
-              Apologetics Africa
-            </span>
+          <Link href="/" className="shrink-0">
+            <img src="/logo.jpeg" alt="Apologetics Africa" className="h-20 w-auto my-1 mx-1" />
           </Link>
 
           {/* Desktop Nav */}

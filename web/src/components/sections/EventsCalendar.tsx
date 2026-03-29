@@ -71,6 +71,28 @@ function useNextSession(): NextSession | null {
   return session;
 }
 
+// ─── Scheduled sessions map (date string → session) ──────────────────────────
+
+function useScheduledSessions(): Map<string, NextSession> {
+  const [map, setMap] = useState<Map<string, NextSession>>(new Map());
+
+  useEffect(() => {
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    fetch(`${base}/api/v1/sessions?status=scheduled`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: NextSession[]) => {
+        const m = new Map<string, NextSession>();
+        for (const s of Array.isArray(data) ? data : []) {
+          if (s.scheduledAt) m.set(new Date(s.scheduledAt).toDateString(), s);
+        }
+        setMap(m);
+      })
+      .catch(() => {});
+  }, []);
+
+  return map;
+}
+
 // ─── Calendar helpers ─────────────────────────────────────────────────────────
 
 function getSaturdaysInMonth(year: number, month: number): Date[] {
@@ -118,6 +140,71 @@ function isThisWeek(date: Date): boolean {
   const today = new Date();
   const diff = (date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
   return diff >= 0 && diff <= 7;
+}
+
+// ─── Dynamic poster placeholder ───────────────────────────────────────────────
+
+function SessionPosterPlaceholder({
+  date,
+  title = 'APOLOGETICS SESSION',
+  speaker = 'Dr John Njoroge',
+}: {
+  date?: Date;
+  title?: string;
+  speaker?: string;
+}) {
+  const dateStr = date
+    ? date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : '';
+
+  return (
+    <div className="w-full aspect-[3/4] bg-gradient-to-b from-brand-900 via-brand-800 to-brand-950 flex flex-col items-center justify-between p-8 text-center relative overflow-hidden select-none">
+      {/* Decorative rings */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.06]">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 border-4 border-white rounded-full" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[28rem] h-[28rem] border border-white rounded-full" />
+      </div>
+
+      {/* Brand */}
+      <div className="relative z-10 flex flex-col items-center gap-2">
+        <p className="text-[0.65rem] font-bold uppercase tracking-[0.35em] text-blue-300">
+          Apologetics Africa
+        </p>
+        <div className="w-10 h-px bg-gold-400" />
+      </div>
+
+      {/* Main content */}
+      <div className="relative z-10 flex flex-col items-center gap-3">
+        <p className="text-[0.6rem] font-semibold uppercase tracking-widest text-gold-300">
+          Presents
+        </p>
+        <h2 className="text-2xl sm:text-3xl font-black text-white uppercase leading-tight tracking-wide">
+          {title}
+        </h2>
+        <div className="w-14 h-px bg-gold-400" />
+        <div className="flex flex-col items-center gap-0.5 mt-1">
+          <p className="text-[0.6rem] uppercase tracking-widest text-blue-300">Speaker</p>
+          <p className="text-lg font-bold text-gold-300">{speaker}</p>
+        </div>
+      </div>
+
+      {/* Date */}
+      <div className="relative z-10 flex flex-col items-center gap-1">
+        {dateStr && (
+          <>
+            <p className="text-[0.6rem] uppercase tracking-widest text-blue-300">Date</p>
+            <p className="text-sm font-semibold text-white">{dateStr}</p>
+          </>
+        )}
+        <p className="text-[0.6rem] text-blue-400 mt-1">7:00 PM EAT · Online &amp; In-Person</p>
+      </div>
+    </div>
+  );
 }
 
 // ─── Components ───────────────────────────────────────────────────────────────
@@ -179,10 +266,37 @@ export function NextSessionBanner() {
 export function EventsCalendar({ variant = 'section' }: Props) {
   const settings = useSessionSettings();
   const nextSession = useNextSession();
-  const events = useMemo(() => getUpcomingEvents(3), []);
+  const scheduledSessions = useScheduledSessions();
+  const allEvents = useMemo(() => getUpcomingEvents(4), []);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // Prefer the session's poster over the global settings poster
-  const posterSrc = nextSession?.posterUrl || settings.poster;
+  // Compute the next session date for the placeholder
+  const nextDate = nextSession?.scheduledAt
+    ? new Date(nextSession.scheduledAt)
+    : allEvents[0];
+
+  // Upcoming dates: exclude whichever date is already shown as "next session"
+  const events = useMemo(() => {
+    const nextTs = nextDate?.toDateString();
+    return allEvents.filter((d) => d.toDateString() !== nextTs).slice(0, 3);
+  }, [allEvents, nextDate]);
+
+  function handleDateClick(date: Date) {
+    setSelectedDate((prev) =>
+      prev?.toDateString() === date.toDateString() ? null : date,
+    );
+  }
+
+  // Derive what to display in the poster panel
+  const activeSession = selectedDate
+    ? (scheduledSessions.get(selectedDate.toDateString()) ?? null)
+    : nextSession;
+  const activeDate = selectedDate ?? nextDate;
+  const activePosterSrc = activeSession?.posterUrl ?? (!selectedDate ? settings.poster : null);
+  const showActivePlaceholder = !activePosterSrc;
+
+  // Keep these for backwards-compat within the card header / share text
+  const posterSrc = activePosterSrc ?? '';
 
   if (variant === 'card') {
     return (
@@ -204,34 +318,44 @@ export function EventsCalendar({ variant = 'section' }: Props) {
         </div>
 
         {/* Poster */}
-        {posterSrc && (
-          <div className="border-b border-slate-100">
+        <div className="border-b border-slate-100">
+          {showActivePlaceholder ? (
+            <SessionPosterPlaceholder date={activeDate} />
+          ) : (
             <img
-              src={posterSrc}
-              alt={`Session poster — ${nextSession?.title || settings.topic}`}
+              src={activePosterSrc!}
+              alt={`Session poster — ${activeSession?.title || settings.topic}`}
               className="w-full object-contain"
             />
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Event list */}
         <div className="divide-y divide-slate-50">
           {events.map((date, i) => {
             const soon = isThisWeek(date);
             const today = isToday(date);
+            const selected = selectedDate?.toDateString() === date.toDateString();
             return (
-              <div
+              <button
                 key={i}
+                type="button"
+                onClick={() => handleDateClick(date)}
                 className={clsx(
-                  'flex items-center gap-3 px-5 py-3',
-                  today && 'bg-brand-50',
-                  soon && !today && 'bg-amber-50/50',
+                  'w-full flex items-center gap-3 px-5 py-3 text-left transition-colors',
+                  selected
+                    ? 'bg-brand-100 ring-1 ring-inset ring-brand-300'
+                    : today
+                    ? 'bg-brand-50 hover:bg-brand-100'
+                    : soon
+                    ? 'bg-amber-50/50 hover:bg-amber-50'
+                    : 'hover:bg-slate-50',
                 )}
               >
                 <div
                   className={clsx(
                     'w-9 h-9 rounded-lg flex flex-col items-center justify-center shrink-0 text-center',
-                    today ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700',
+                    selected || today ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700',
                   )}
                 >
                   <span className="text-xs leading-none font-bold">
@@ -252,7 +376,7 @@ export function EventsCalendar({ variant = 'section' }: Props) {
                     {settings.time}
                   </p>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -285,7 +409,16 @@ export function EventsCalendar({ variant = 'section' }: Props) {
               and seekers welcome. No question is off-limits.
             </p>
 
-            <div className="bg-white/10 border border-white/20 rounded-2xl p-6 mb-6 backdrop-blur-sm">
+            <button
+              type="button"
+              onClick={() => setSelectedDate(null)}
+              className={clsx(
+                'w-full text-left rounded-2xl p-6 mb-6 backdrop-blur-sm border transition-colors',
+                selectedDate === null
+                  ? 'bg-white/25 border-white/60 ring-1 ring-white/40'
+                  : 'bg-white/10 border-white/20 hover:bg-white/15',
+              )}
+            >
               <p className="text-xs font-semibold uppercase tracking-widest text-blue-300 mb-2">
                 {nextSession ? 'Next Session' : 'Current Topic'}
               </p>
@@ -302,7 +435,7 @@ export function EventsCalendar({ variant = 'section' }: Props) {
               <p className="text-blue-200 text-sm mt-2 leading-relaxed">
                 {nextSession?.description || settings.description}
               </p>
-            </div>
+            </button>
 
             <div className="flex flex-col gap-2 text-sm text-blue-200 mb-8">
               <span className="flex items-center gap-2">
@@ -322,22 +455,28 @@ export function EventsCalendar({ variant = 'section' }: Props) {
               {events.map((date, i) => {
                 const today = isToday(date);
                 const soon = isThisWeek(date);
+                const selected = selectedDate?.toDateString() === date.toDateString();
+                const sessionForDate = scheduledSessions.get(date.toDateString());
                 return (
-                  <div
+                  <button
                     key={i}
+                    type="button"
+                    onClick={() => handleDateClick(date)}
                     className={clsx(
-                      'flex items-center gap-4 p-4 rounded-xl border transition-colors',
-                      today
-                        ? 'bg-white/20 border-white/40'
+                      'w-full flex items-center gap-4 p-4 rounded-xl border transition-colors text-left',
+                      selected
+                        ? 'bg-white/25 border-white/60 ring-1 ring-white/40'
+                        : today
+                        ? 'bg-white/20 border-white/40 hover:bg-white/25'
                         : soon
-                        ? 'bg-white/10 border-white/20'
-                        : 'bg-white/5 border-white/10',
+                        ? 'bg-white/10 border-white/20 hover:bg-white/15'
+                        : 'bg-white/5 border-white/10 hover:bg-white/10',
                     )}
                   >
                     <div
                       className={clsx(
                         'w-14 h-14 rounded-xl flex flex-col items-center justify-center shrink-0',
-                        today ? 'bg-white text-brand-800' : 'bg-white/10 text-white',
+                        selected || today ? 'bg-white text-brand-800' : 'bg-white/10 text-white',
                       )}
                     >
                       <span className="text-xl font-bold leading-none">{date.getDate()}</span>
@@ -358,12 +497,17 @@ export function EventsCalendar({ variant = 'section' }: Props) {
                             This week
                           </span>
                         )}
+                        {sessionForDate?.posterUrl && (
+                          <span className="ml-2 text-xs bg-blue-500/60 text-white px-2 py-0.5 rounded-full">
+                            Poster
+                          </span>
+                        )}
                       </p>
                       <p className="text-sm text-blue-200 mt-0.5">
-                        {settings.time} · {nextSession?.title || settings.topic}
+                        {settings.time} · {sessionForDate?.title || settings.topic}
                       </p>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -386,65 +530,71 @@ export function EventsCalendar({ variant = 'section' }: Props) {
           </div>
 
           {/* Right: poster */}
-          {posterSrc && (
-            <div className="rounded-2xl overflow-hidden border border-white/10 shadow-xl sticky top-8">
+          <div className="rounded-2xl overflow-hidden border border-white/10 shadow-xl sticky top-8">
+            {showActivePlaceholder ? (
+              <SessionPosterPlaceholder date={activeDate} />
+            ) : (
               <img
-                src={posterSrc}
-                alt={`Session poster — ${nextSession?.title || settings.topic}`}
+                src={activePosterSrc!}
+                alt={`Session poster — ${activeSession?.title || settings.topic}`}
                 className="w-full object-contain"
               />
-              {/* Download / Share actions */}
-              <div className="flex items-center gap-2 px-4 py-3 bg-white/5 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      const res = await fetch(posterSrc);
-                      const blob = await res.blob();
-                      const objectUrl = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = objectUrl;
-                      a.download = `session-poster-${Date.now()}.${blob.type.split('/')[1] || 'jpg'}`;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                      URL.revokeObjectURL(objectUrl);
-                    } catch {
-                      window.open(posterSrc, '_blank');
-                    }
-                  }}
-                  className="flex items-center gap-1.5 text-xs font-medium text-blue-200 hover:text-white transition-colors"
-                >
-                  <ArrowDownTrayIcon className="w-4 h-4" />
-                  Download Poster
-                </button>
-                <span className="text-white/20">·</span>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const title = nextSession?.title || settings.topic;
-                    const sessionUrl = `${window.location.origin}/#saturday-sessions`;
-                    if (navigator.share) {
+            )}
+            {/* Download / Share actions */}
+            <div className="flex items-center gap-2 px-4 py-3 bg-white/5 border-t border-white/10">
+              {!showActivePlaceholder && (
+                <>
+                  <button
+                    type="button"
+                    onClick={async () => {
                       try {
-                        await navigator.share({
-                          title: `Session: ${title}`,
-                          text: `Join us for "${title}" — an Apologetics Africa Saturday session.`,
-                          url: sessionUrl,
-                        });
-                      } catch {}
-                    } else {
-                      await navigator.clipboard.writeText(sessionUrl);
-                      alert('Link copied to clipboard!');
-                    }
-                  }}
-                  className="flex items-center gap-1.5 text-xs font-medium text-blue-200 hover:text-white transition-colors"
-                >
-                  <ShareIcon className="w-4 h-4" />
-                  Share Poster
-                </button>
-              </div>
+                        const res = await fetch(activePosterSrc!);
+                        const blob = await res.blob();
+                        const objectUrl = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = objectUrl;
+                        a.download = `session-poster-${Date.now()}.${blob.type.split('/')[1] || 'jpg'}`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(objectUrl);
+                      } catch {
+                        window.open(activePosterSrc!, '_blank');
+                      }
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-medium text-blue-200 hover:text-white transition-colors"
+                  >
+                    <ArrowDownTrayIcon className="w-4 h-4" />
+                    Download Poster
+                  </button>
+                  <span className="text-white/20">·</span>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={async () => {
+                  const title = activeSession?.title || settings.topic;
+                  const sessionUrl = `${window.location.origin}/#saturday-sessions`;
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: `Session: ${title}`,
+                        text: `Join us for "${title}" — an Apologetics Africa Saturday session.`,
+                        url: sessionUrl,
+                      });
+                    } catch {}
+                  } else {
+                    await navigator.clipboard.writeText(sessionUrl);
+                    alert('Link copied to clipboard!');
+                  }
+                }}
+                className="flex items-center gap-1.5 text-xs font-medium text-blue-200 hover:text-white transition-colors"
+              >
+                <ShareIcon className="w-4 h-4" />
+                Share Poster
+              </button>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </section>

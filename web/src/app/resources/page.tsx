@@ -11,15 +11,16 @@ import { clsx } from 'clsx';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
+// Non-multimedia types excluded from the Resources page (they live under Blog)
+const EXCLUDED_TYPES = 'article,book,tool';
+
 const MEDIA_TYPES = [
-  { value: '',         label: 'All Media'   },
-  { value: 'sermon',  label: 'Sermons'     },
-  { value: 'session', label: 'Sessions'    },
-  { value: 'video',   label: 'Videos'      },
-  { value: 'podcast', label: 'Podcasts'    },
-  { value: 'course',  label: 'Courses'     },
-  { value: 'book',    label: 'Books'       },
-  { value: 'tool',    label: 'Tools'       },
+  { value: '',         label: 'All Media'  },
+  { value: 'session',  label: 'Sessions'   },
+  { value: 'sermon',   label: 'Sermons'    },
+  { value: 'video',    label: 'Videos'     },
+  { value: 'podcast',  label: 'Podcasts'   },
+  { value: 'course',   label: 'Courses'    },
 ];
 
 const CATEGORIES = [
@@ -90,6 +91,7 @@ export default function ResourcesPage() {
       const params: Record<string, string | number> = { page, limit: 9 };
       if (search) params.search = search;
       if (mediaType) params.type = mediaType;
+      else params.excludeTypes = EXCLUDED_TYPES;
       if (category) params.category = category;
       if (book) params.bookOfBible = book;
       if (year) params.year = year;
@@ -123,8 +125,8 @@ export default function ResourcesPage() {
           <p className="section-label">Library</p>
           <h1 className="section-title">Apologetics Resources</h1>
           <p className="section-subtitle max-w-2xl">
-            Sermons, sessions, videos, and podcasts — curated multimedia to
-            equip you in defending and sharing the Christian faith across Africa.
+            Sessions, sermons, videos, podcasts, and courses — curated multimedia
+            to equip you in defending and sharing the Christian faith across Africa.
           </p>
         </div>
       </div>

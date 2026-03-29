@@ -74,12 +74,12 @@ function useCountdown(target: Date | null) {
 function CountdownUnit({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex flex-col items-center">
-      <div className="w-20 h-20 sm:w-24 sm:h-24 bg-slate-800 rounded-2xl flex items-center justify-center">
-        <span className="text-3xl sm:text-4xl font-bold text-white tabular-nums">
+      <div className="w-14 h-14 sm:w-20 sm:h-20 bg-slate-800 rounded-xl sm:rounded-2xl flex items-center justify-center">
+        <span className="text-xl sm:text-3xl font-bold text-white tabular-nums">
           {String(value).padStart(2, '0')}
         </span>
       </div>
-      <span className="mt-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
+      <span className="mt-1.5 text-[0.6rem] sm:text-xs font-semibold uppercase tracking-widest text-slate-500">
         {label}
       </span>
     </div>
@@ -101,33 +101,31 @@ function NextSessionCard({
   const started = remaining?.total === 0;
 
   return (
-    <div className="mb-12 bg-slate-900 rounded-2xl overflow-hidden">
-      <div className="px-8 pt-8 pb-6 text-center">
+    <div className="mb-10 bg-slate-900 rounded-2xl overflow-hidden">
+      <div className="px-4 sm:px-8 pt-7 pb-5 text-center">
         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-900/60 text-brand-300 border border-brand-700/40">
           <CalendarDaysIcon className="w-3.5 h-3.5" />
           Next Session
         </span>
-        <h2 className="mt-4 text-2xl sm:text-3xl font-bold text-white">{title}</h2>
+        <h2 className="mt-3 text-xl sm:text-3xl font-bold text-white leading-snug">{title}</h2>
         {description && (
           <p className="mt-2 text-slate-400 max-w-lg mx-auto text-sm">{description}</p>
         )}
-        <p className="mt-3 flex items-center justify-center gap-1.5 text-sm text-slate-400">
-          <CalendarDaysIcon className="w-4 h-4" />
-          {target.toLocaleDateString([], {
-            weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-          })}
-          {' · '}
-          {target.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
+        <p className="mt-3 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 text-sm text-slate-400">
+          <CalendarDaysIcon className="w-4 h-4 hidden sm:block" />
+          <span>{target.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
+          <span className="hidden sm:inline">·</span>
+          <span>{target.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}</span>
         </p>
       </div>
 
-      <div className="bg-slate-800/60 px-8 py-8">
+      <div className="bg-slate-800/60 px-4 sm:px-8 py-6 sm:py-8">
         {!started && remaining ? (
           <>
-            <p className="text-center text-xs font-semibold uppercase tracking-widest text-slate-500 mb-6">
+            <p className="text-center text-xs font-semibold uppercase tracking-widest text-slate-500 mb-5">
               Session starts in
             </p>
-            <div className="flex items-start justify-center gap-3 sm:gap-5">
+            <div className="flex items-start justify-center gap-2 sm:gap-5">
               {remaining.days > 0 && <CountdownUnit value={remaining.days} label="Days" />}
               <CountdownUnit value={remaining.hours} label="Hours" />
               <CountdownUnit value={remaining.minutes} label="Min" />
@@ -181,25 +179,25 @@ export default function LivePage() {
   return (
     <div className="bg-white">
       {/* Hero */}
-      <section className="bg-slate-900 py-20">
-        <div className="container-xl text-center">
+      <section className="bg-slate-900 py-12 sm:py-20">
+        <div className="container-xl text-center px-4">
           <div className="flex items-center justify-center gap-2 mb-3">
             <SignalIcon className="w-5 h-5 text-brand-400" />
             <p className="text-brand-400 text-sm font-semibold uppercase tracking-widest">
               Live Sessions
             </p>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
+          <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4">
             Saturday Apologetics
           </h1>
-          <p className="text-slate-400 text-lg max-w-xl mx-auto">
+          <p className="text-slate-400 text-base sm:text-lg max-w-xl mx-auto">
             Join our live interactive sessions every 2nd &amp; 4th Saturday at 7:00 PM EAT.
             Ask questions, comment, and engage in real time.
           </p>
         </div>
       </section>
 
-      <section className="container-xl py-16">
+      <section className="container-xl py-8 sm:py-16 px-4">
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
@@ -208,7 +206,7 @@ export default function LivePage() {
           <>
             {/* Active live session */}
             {live ? (
-              <div className="mb-12 bg-green-50 border border-green-200 rounded-2xl p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+              <div className="mb-10 bg-green-50 border border-green-200 rounded-2xl p-5 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center shrink-0">
                     <SignalIcon className="w-6 h-6 text-green-600 animate-pulse" />
