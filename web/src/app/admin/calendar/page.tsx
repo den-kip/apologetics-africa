@@ -103,9 +103,10 @@ interface PosterFieldProps {
   value: string;
   onChange: (url: string) => void;
   token: string;
+  sessionDate?: string; // YYYY-MM-DD — used to name the uploaded poster file
 }
 
-function PosterField({ value, onChange, token }: PosterFieldProps) {
+function PosterField({ value, onChange, token, sessionDate }: PosterFieldProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -117,7 +118,8 @@ function PosterField({ value, onChange, token }: PosterFieldProps) {
       const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const form = new FormData();
       form.append('file', file);
-      const res = await fetch(`${base}/api/v1/upload/image`, {
+      const dateParam = sessionDate ? `?sessionDate=${encodeURIComponent(sessionDate)}` : '';
+      const res = await fetch(`${base}/api/v1/upload/poster${dateParam}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: form,
@@ -127,8 +129,7 @@ function PosterField({ value, onChange, token }: PosterFieldProps) {
         throw new Error(err.message || 'Upload failed');
       }
       const { url } = await res.json();
-      const base2 = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      onChange(url.startsWith('http') ? url : `${base2}${url}`);
+      onChange(url.startsWith('http') ? url : `${base}${url}`);
     } catch (e: any) {
       setError(e.message || 'Upload failed');
     } finally {
@@ -271,7 +272,7 @@ function EditModal({ session, tz, token, onSave, onClose }: EditModalProps) {
             </select>
           </div>
 
-          <PosterField value={poster} onChange={setPoster} token={token} />
+          <PosterField value={poster} onChange={setPoster} token={token} sessionDate={date || undefined} />
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -822,7 +823,7 @@ export default function AdminCalendarPage() {
                         </div>
                       </div>
                       {token && (
-                        <PosterField value={newPoster} onChange={setNewPoster} token={token} />
+                        <PosterField value={newPoster} onChange={setNewPoster} token={token} sessionDate={selectedDay ?? undefined} />
                       )}
                       <div>
                         <label className="block text-xs font-medium text-slate-600 mb-1">Session Link (optional)</label>

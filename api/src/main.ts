@@ -13,9 +13,10 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log', 'debug'],
   });
 
-  // Ensure uploads directory exists
+  // Ensure uploads directories exist
   const uploadsDir = join(process.cwd(), 'uploads');
   mkdirSync(uploadsDir, { recursive: true });
+  mkdirSync(join(uploadsDir, 'posters'), { recursive: true });
 
   // Serve uploaded files as static assets at /uploads/*
   app.useStaticAssets(uploadsDir, { prefix: '/uploads' });

@@ -292,7 +292,8 @@ export function EventsCalendar({ variant = 'section' }: Props) {
     ? (scheduledSessions.get(selectedDate.toDateString()) ?? null)
     : nextSession;
   const activeDate = selectedDate ?? nextDate;
-  const activePosterSrc = activeSession?.posterUrl ?? (!selectedDate ? settings.poster : null);
+  // Always show the dynamic placeholder when a session/event has no linked poster
+  const activePosterSrc = activeSession?.posterUrl ?? null;
   const showActivePlaceholder = !activePosterSrc;
 
   // Keep these for backwards-compat within the card header / share text
