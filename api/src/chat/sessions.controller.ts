@@ -44,7 +44,7 @@ export class SessionsController {
   @Get()
   @ApiOperation({ summary: 'List upcoming and live sessions (public)' })
   list(@Query('status') status?: SessionStatus) {
-    return this.chatService.listSessions(status);
+    return this.chatService.listSessions(status, false, true);
   }
 
   @Get('live')

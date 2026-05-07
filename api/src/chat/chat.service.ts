@@ -31,9 +31,9 @@ export class ChatService implements OnModuleInit {
 
   // ─── Sessions ─────────────────────────────────────────────────────────────
 
-  async listSessions(status?: SessionStatus, includeEnded = false) {
+  async listSessions(status?: SessionStatus, includeEnded = false, futureOnly = false) {
     const qb = this.sessionRepo.createQueryBuilder('s')
-      .orderBy('s.scheduledAt', 'DESC');
+      .orderBy('s.scheduledAt', 'ASC');
 
     if (status) {
       qb.where('s.status = :status', { status });
@@ -41,6 +41,10 @@ export class ChatService implements OnModuleInit {
       qb.where('s.status NOT IN (:...exclude)', {
         exclude: [SessionStatus.ENDED, SessionStatus.CANCELLED],
       });
+    }
+
+    if (futureOnly) {
+      qb.andWhere('s.scheduledAt >= :now', { now: new Date() });
     }
 
     return qb.getMany();

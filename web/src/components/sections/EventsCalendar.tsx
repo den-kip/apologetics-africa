@@ -78,22 +78,32 @@ function useScheduledSessions(): { map: Map<string, NextSession>; upcoming: Next
   const [upcoming, setUpcoming] = useState<NextSession[]>([]);
 
   useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    fetch(`${base}/api/v1/sessions?status=scheduled`)
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: NextSession[]) => {
-        const now = new Date();
-        const sorted = (Array.isArray(data) ? data : [])
-          .filter((s) => s.scheduledAt && new Date(s.scheduledAt) >= now)
-          .sort((a, b) => new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime());
-        const m = new Map<string, NextSession>();
-        for (const s of sorted) {
-          m.set(new Date(s.scheduledAt!).toDateString(), s);
-        }
-        setMap(m);
-        setUpcoming(sorted);
-      })
-      .catch(() => {});
+    function load() {
+      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const now = new Date();
+      fetch(`${base}/api/v1/sessions?status=scheduled`)
+        .then((r) => (r.ok ? r.json() : []))
+        .then((data: NextSession[]) => {
+          // Client-side guard: drop anything already in the past relative to NOW
+          const sorted = (Array.isArray(data) ? data : [])
+            .filter((s) => s.scheduledAt && new Date(s.scheduledAt) >= now)
+            .sort((a, b) => new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime());
+          const m = new Map<string, NextSession>();
+          for (const s of sorted) {
+            m.set(new Date(s.scheduledAt!).toDateString(), s);
+          }
+          setMap(m);
+          setUpcoming(sorted);
+        })
+        .catch(() => {});
+    }
+
+    load();
+
+    // Re-fetch whenever the user returns to this tab (handles system date changes)
+    const onVisibility = () => { if (document.visibilityState === 'visible') load(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
 
   return { map, upcoming };
@@ -271,22 +281,17 @@ export function NextSessionBanner() {
 
 export function EventsCalendar({ variant = 'section' }: Props) {
   const settings = useSessionSettings();
-  const nextSession = useNextSession();
   const { map: scheduledSessions, upcoming: upcomingSessions } = useScheduledSessions();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // Next session date — from DB if available
+  // Single source of truth: first item in the sorted upcoming list is the next session
+  const nextSession = upcomingSessions[0] ?? null;
   const nextDate: Date | undefined = nextSession?.scheduledAt
     ? new Date(nextSession.scheduledAt)
-    : upcomingSessions[0]?.scheduledAt
-    ? new Date(upcomingSessions[0].scheduledAt)
     : undefined;
 
-  // Upcoming sessions after the "next" one
-  const events = useMemo(
-    () => upcomingSessions.filter((s) => s.id !== nextSession?.id),
-    [upcomingSessions, nextSession],
-  );
+  // Next 5 sessions after the featured one
+  const events = upcomingSessions.slice(1, 6);
 
   function handleDateClick(date: Date) {
     setSelectedDate((prev) =>
@@ -465,7 +470,7 @@ export function EventsCalendar({ variant = 'section' }: Props) {
             <div className="space-y-3 mb-8">
               {events.length === 0 ? (
                 <p className="text-sm text-blue-300/70 py-2">No further sessions scheduled yet.</p>
-              ) : events.slice(0, 5).map((session) => {
+              ) : events.map((session) => {
                 const date = new Date(session.scheduledAt!);
                 const today = isToday(date);
                 const soon = isThisWeek(date);
