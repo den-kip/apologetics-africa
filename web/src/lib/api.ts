@@ -126,6 +126,8 @@ export const api = {
       request<void>(`/sessions/${id}`, { method: 'DELETE', token }),
     cancel: (id: string, token: string) =>
       request<LiveSession>(`/sessions/${id}/cancel`, { method: 'PATCH', token }),
+    uncancel: (id: string, token: string) =>
+      request<LiveSession>(`/sessions/${id}/uncancel`, { method: 'PATCH', token }),
     generate: (token: string) =>
       request<{ created: number }>('/sessions/generate', { method: 'POST', token }),
     listAll: (token: string, status?: string) => {

@@ -139,6 +139,15 @@ export class SessionsController {
     return this.chatService.cancelSession(id);
   }
 
+  @Patch(':id/uncancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Uncancel a cancelled session — restores it to scheduled (admin)' })
+  uncancel(@Param('id', ParseUUIDPipe) id: string) {
+    return this.chatService.uncancelSession(id);
+  }
+
   @Post('generate')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)

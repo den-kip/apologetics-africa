@@ -5,7 +5,7 @@ import {
   ChevronLeftIcon, ChevronRightIcon, PlusIcon, PlayIcon,
   StopIcon, XCircleIcon, PencilIcon, TrashIcon, CalendarDaysIcon,
   ClockIcon, CheckCircleIcon, Cog6ToothIcon, PhotoIcon, LinkIcon,
-  ArrowUpTrayIcon, XMarkIcon,
+  ArrowUpTrayIcon, XMarkIcon, ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { api, type LiveSession } from '@/lib/api';
@@ -459,6 +459,12 @@ export default function AdminCalendarPage() {
     try { await api.sessions.cancel(s.id, token); loadSessions(); }
     finally { setActionId(null); }
   }
+  async function handleUncancel(s: LiveSession) {
+    if (!token || !confirm(`Restore "${s.title}" as scheduled?`)) return;
+    setActionId(s.id);
+    try { await api.sessions.uncancel(s.id, token); loadSessions(); }
+    finally { setActionId(null); }
+  }
   async function handleDelete(s: LiveSession) {
     if (!token || !confirm(`Delete "${s.title}"? Cannot be undone.`)) return;
     setActionId(s.id);
@@ -739,7 +745,7 @@ export default function AdminCalendarPage() {
                                 <PlayIcon className="w-3.5 h-3.5" />
                               </button>
                               <button onClick={() => handleCancel(s)} disabled={actionId === s.id}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition-colors disabled:opacity-40" title="Cancel">
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition-colors disabled:opacity-40" title="Cancel session">
                                 <XCircleIcon className="w-3.5 h-3.5" />
                               </button>
                             </>
@@ -748,6 +754,12 @@ export default function AdminCalendarPage() {
                             <button onClick={() => handleEnd(s)} disabled={actionId === s.id}
                               className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-40" title="End">
                               <StopIcon className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {s.status === 'cancelled' && (
+                            <button onClick={() => handleUncancel(s)} disabled={actionId === s.id}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-green-600 hover:bg-green-50 transition-colors disabled:opacity-40" title="Restore to scheduled">
+                              <ArrowPathIcon className="w-3.5 h-3.5" />
                             </button>
                           )}
                           <button onClick={() => handleDelete(s)} disabled={actionId === s.id}

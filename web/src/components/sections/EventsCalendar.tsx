@@ -73,24 +73,30 @@ function useNextSession(): NextSession | null {
 
 // ─── Scheduled sessions map (date string → session) ──────────────────────────
 
-function useScheduledSessions(): Map<string, NextSession> {
+function useScheduledSessions(): { map: Map<string, NextSession>; upcoming: NextSession[] } {
   const [map, setMap] = useState<Map<string, NextSession>>(new Map());
+  const [upcoming, setUpcoming] = useState<NextSession[]>([]);
 
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
     fetch(`${base}/api/v1/sessions?status=scheduled`)
       .then((r) => (r.ok ? r.json() : []))
       .then((data: NextSession[]) => {
+        const now = new Date();
+        const sorted = (Array.isArray(data) ? data : [])
+          .filter((s) => s.scheduledAt && new Date(s.scheduledAt) >= now)
+          .sort((a, b) => new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime());
         const m = new Map<string, NextSession>();
-        for (const s of Array.isArray(data) ? data : []) {
-          if (s.scheduledAt) m.set(new Date(s.scheduledAt).toDateString(), s);
+        for (const s of sorted) {
+          m.set(new Date(s.scheduledAt!).toDateString(), s);
         }
         setMap(m);
+        setUpcoming(sorted);
       })
       .catch(() => {});
   }, []);
 
-  return map;
+  return { map, upcoming };
 }
 
 // ─── Calendar helpers ─────────────────────────────────────────────────────────
@@ -242,7 +248,7 @@ export function NextSessionBanner() {
         <div className="flex items-center gap-3 text-sm">
           <span className="inline-flex items-center gap-1.5 bg-gold-500/20 border border-gold-500/40 text-gold-300 px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wide">
             <span className="w-1.5 h-1.5 rounded-full bg-gold-400 animate-pulse" />
-            {today ? 'Tonight!' : soon ? 'This Saturday' : 'Saturday Session'}
+            {today ? 'Tonight!' : soon ? 'Coming Soon' : 'Upcoming Session'}
           </span>
           <span className="text-white font-medium">
             <strong className="text-gold-300">{title}</strong>
@@ -266,20 +272,21 @@ export function NextSessionBanner() {
 export function EventsCalendar({ variant = 'section' }: Props) {
   const settings = useSessionSettings();
   const nextSession = useNextSession();
-  const scheduledSessions = useScheduledSessions();
-  const allEvents = useMemo(() => getUpcomingEvents(4), []);
+  const { map: scheduledSessions, upcoming: upcomingSessions } = useScheduledSessions();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // Compute the next session date for the placeholder
-  const nextDate = nextSession?.scheduledAt
+  // Next session date — from DB if available
+  const nextDate: Date | undefined = nextSession?.scheduledAt
     ? new Date(nextSession.scheduledAt)
-    : allEvents[0];
+    : upcomingSessions[0]?.scheduledAt
+    ? new Date(upcomingSessions[0].scheduledAt)
+    : undefined;
 
-  // Upcoming dates: exclude whichever date is already shown as "next session"
-  const events = useMemo(() => {
-    const nextTs = nextDate?.toDateString();
-    return allEvents.filter((d) => d.toDateString() !== nextTs).slice(0, 3);
-  }, [allEvents, nextDate]);
+  // Upcoming sessions after the "next" one
+  const events = useMemo(
+    () => upcomingSessions.filter((s) => s.id !== nextSession?.id),
+    [upcomingSessions, nextSession],
+  );
 
   function handleDateClick(date: Date) {
     setSelectedDate((prev) =>
@@ -291,7 +298,7 @@ export function EventsCalendar({ variant = 'section' }: Props) {
   const activeSession = selectedDate
     ? (scheduledSessions.get(selectedDate.toDateString()) ?? null)
     : nextSession;
-  const activeDate = selectedDate ?? nextDate;
+  const activeDate: Date | undefined = selectedDate ?? nextDate;
   // Always show the dynamic placeholder when a session/event has no linked poster
   const activePosterSrc = activeSession?.posterUrl ?? null;
   const showActivePlaceholder = !activePosterSrc;
@@ -333,13 +340,16 @@ export function EventsCalendar({ variant = 'section' }: Props) {
 
         {/* Event list */}
         <div className="divide-y divide-slate-50">
-          {events.map((date, i) => {
+          {events.length === 0 ? (
+            <p className="text-xs text-slate-400 text-center px-5 py-4">No further sessions scheduled.</p>
+          ) : events.slice(0, 3).map((session) => {
+            const date = new Date(session.scheduledAt!);
             const soon = isThisWeek(date);
             const today = isToday(date);
             const selected = selectedDate?.toDateString() === date.toDateString();
             return (
               <button
-                key={i}
+                key={session.id}
                 type="button"
                 onClick={() => handleDateClick(date)}
                 className={clsx(
@@ -374,7 +384,7 @@ export function EventsCalendar({ variant = 'section' }: Props) {
                   </p>
                   <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
                     <ClockIcon className="w-3 h-3" />
-                    {settings.time}
+                    {settings.time} · {session.title || settings.topic}
                   </p>
                 </div>
               </button>
@@ -453,14 +463,16 @@ export function EventsCalendar({ variant = 'section' }: Props) {
               Upcoming Dates
             </p>
             <div className="space-y-3 mb-8">
-              {events.map((date, i) => {
+              {events.length === 0 ? (
+                <p className="text-sm text-blue-300/70 py-2">No further sessions scheduled yet.</p>
+              ) : events.slice(0, 5).map((session) => {
+                const date = new Date(session.scheduledAt!);
                 const today = isToday(date);
                 const soon = isThisWeek(date);
                 const selected = selectedDate?.toDateString() === date.toDateString();
-                const sessionForDate = scheduledSessions.get(date.toDateString());
                 return (
                   <button
-                    key={i}
+                    key={session.id}
                     type="button"
                     onClick={() => handleDateClick(date)}
                     className={clsx(
@@ -498,14 +510,14 @@ export function EventsCalendar({ variant = 'section' }: Props) {
                             This week
                           </span>
                         )}
-                        {sessionForDate?.posterUrl && (
+                        {session.posterUrl && (
                           <span className="ml-2 text-xs bg-blue-500/60 text-white px-2 py-0.5 rounded-full">
                             Poster
                           </span>
                         )}
                       </p>
                       <p className="text-sm text-blue-200 mt-0.5">
-                        {settings.time} · {sessionForDate?.title || settings.topic}
+                        {settings.time} · {session.title || settings.topic}
                       </p>
                     </div>
                   </button>

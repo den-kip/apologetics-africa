@@ -113,6 +113,12 @@ export class ChatService implements OnModuleInit {
     return this.sessionRepo.save(session);
   }
 
+  async uncancelSession(id: string): Promise<LiveSession> {
+    const session = await this.sessionRepo.findOneOrFail({ where: { id } });
+    session.status = SessionStatus.SCHEDULED;
+    return this.sessionRepo.save(session);
+  }
+
   async generateUpcomingSessions(monthsAhead = 2): Promise<{ created: number }> {
     const now = new Date();
     let created = 0;
